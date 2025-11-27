@@ -63,11 +63,9 @@ const fetchDashboardStats = async (filter: TimeFilter) => {
   return result;
 };
 
-const fetchRecentTransactions = async (filter: TimeFilter) => {
-  const dateRange = getDateRange(filter);
+const fetchRecentTransactions = async () => {
   const result = await getRecentMerchantTransactions({
     limit: 10,
-    ...dateRange,
   });
   if (result.error) {
     throw new Error(result.error);
@@ -85,8 +83,8 @@ export const MerchantDashboard = () => {
   });
 
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["merchant-recent-transactions", timeFilter],
-    queryFn: () => fetchRecentTransactions(timeFilter),
+    queryKey: ["merchant-recent-transactions"],
+    queryFn: () => fetchRecentTransactions(),
     staleTime: 30000,
   });
 
