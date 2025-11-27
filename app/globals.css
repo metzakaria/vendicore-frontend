@@ -45,16 +45,19 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  /* Modern Color Palette - Rich Indigo & Vibrant Violet */
+  --background: oklch(0.98 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Primary: Indigo-900 (#312e81) - Deep dark indigo */
+  --primary: oklch(0.35 0.08 270);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  /* Secondary: Vibrant Violet-600 (#7c3aed) - Deep purple */
+  --secondary: oklch(0.52 0.22 285);
+  --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
@@ -62,20 +65,21 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --ring: oklch(0.35 0.08 270);
+  --chart-1: oklch(0.48 0.19 270);
+  --chart-2: oklch(0.52 0.22 285);
+  --chart-3: oklch(0.6 0.18 200);
+  --chart-4: oklch(0.65 0.15 160);
+  --chart-5: oklch(0.7 0.2 330);
+  /* Sidebar - Darker Periwinkle/Purple - Medium-dark purple-blue */
+  --sidebar: oklch(0.5 0.12 280);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.35 0.08 270);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.55 0.13 280);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.45 0.11 280);
+  --sidebar-ring: oklch(0.35 0.08 270);
 }
 
 .dark {
@@ -118,5 +122,63 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: oklch(0.98 0 0);
+  }
+  
+  /* Icons inherit primary color by default in interactive contexts */
+  button:not([class*="sidebar"]) svg,
+  a:not([class*="sidebar"]) svg,
+  [role="button"]:not([class*="sidebar"]) svg {
+    @apply text-primary;
+  }
+  
+  /* Buttons with background colors - icons inherit foreground color */
+  button.bg-primary svg,
+  button[class*="bg-primary"] svg,
+  button.bg-destructive svg,
+  button[class*="bg-destructive"] svg,
+  button.bg-secondary svg,
+  button[class*="bg-secondary"] svg {
+    @apply text-inherit;
+  }
+  
+  /* Sidebar icons inherit sidebar text color */
+  [class*="sidebar"] svg {
+    @apply text-inherit;
+  }
+}
+
+/* Gradient Utilities */
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, oklch(0.35 0.08 270) 0%, oklch(0.52 0.22 285) 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, oklch(0.52 0.22 285) 0%, oklch(0.58 0.2 300) 100%);
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, oklch(0.65 0.15 160) 0%, oklch(0.6 0.15 160) 100%);
+  }
+  
+  .gradient-card {
+    background: linear-gradient(135deg, oklch(1 0 0) 0%, oklch(0.99 0.002 270) 100%);
+  }
+  
+  .gradient-sidebar {
+    background: linear-gradient(180deg, oklch(0.5 0.12 280) 0%, oklch(0.48 0.12 285) 100%) !important;
+  }
+  
+  .shadow-primary {
+    box-shadow: 0 4px 14px 0 oklch(0.35 0.08 270 / 0.2), 0 2px 4px 0 oklch(0.35 0.08 270 / 0.1);
+  }
+  
+  .shadow-lg-primary {
+    box-shadow: 0 10px 25px -5px oklch(0.35 0.08 270 / 0.25), 0 4px 6px -2px oklch(0.35 0.08 270 / 0.15);
+  }
+  
+  .shadow-sidebar {
+    box-shadow: 2px 0 10px 0 oklch(0.1 0.05 270 / 0.1);
   }
 }
