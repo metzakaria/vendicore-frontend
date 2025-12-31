@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, CalendarIcon, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Eye, CalendarIcon, Filter, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { exportToCSV } from "@/lib/utils/csvExport";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTransactions } from "../_actions/getTransactions";
@@ -272,6 +273,33 @@ export const TransactionList = () => {
     setPage(newPage);
   };
 
+  const handleExport = () => {
+    if (!transactions || transactions.length === 0) {
+      return;
+    }
+
+    // Prepare data for CSV export
+    const exportData = transactions.map((tx) => ({
+      "Transaction ID": tx.id,
+      "Merchant": tx.vas_merchants?.business_name || "N/A",
+      "Merchant Code": tx.vas_merchants?.merchant_code || "N/A",
+      "Product": tx.vas_products?.product_name || "N/A",
+      "Merchant Ref": tx.merchant_ref,
+      "Provider Ref": tx.provider_ref || "N/A",
+      "Beneficiary": tx.beneficiary_account,
+      "Amount": formatCurrency(tx.amount),
+      "Discount": formatCurrency(tx.discount_amount),
+      "Balance Before": formatCurrency(tx.balance_before),
+      "Balance After": formatCurrency(tx.balance_after),
+      "Status": tx.status,
+      "Description": tx.description || "N/A",
+      "Date": formatDateTime(tx.created_at),
+    }));
+
+    const filename = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
+    exportToCSV(exportData, filename);
+  };
+
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
@@ -323,6 +351,14 @@ export const TransactionList = () => {
             View and manage all transactions
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={!transactions || transactions.length === 0}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Filters */}
@@ -557,7 +593,7 @@ export const TransactionList = () => {
                         {transaction.vas_products.product_name}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
-                        {transaction.vas_products.product_code}
+                        via: {transaction?.vas_provider_accounts.account_name}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">

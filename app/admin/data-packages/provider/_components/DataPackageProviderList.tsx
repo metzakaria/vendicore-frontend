@@ -29,8 +29,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDataPackages } from "../_actions/getDataPackages";
-import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
+import { getDataPackagesWithProviderCode } from "../../_actions/getDataPackages";
+import { getProvidersForDropdown } from "@/app/admin/providers/_actions/getProvidersForDropdown";
 
 interface DataPackage {
   id: string;
@@ -52,113 +52,77 @@ interface DataPackage {
 interface DataPackagesResponse {
   packages: DataPackage[];
   total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 const fetchDataPackages = async (
-  page: number,
-  search: string,
-  status: string,
-  productId: string
+  network: string,
+  providerId: string
 ): Promise<DataPackagesResponse> => {
-  const result = await getDataPackages({
-    page,
-    limit: 10,
-    search,
-    status: status as "active" | "inactive" | "all",
-    product_id: productId && productId !== "all" ? productId : undefined,
+  const result = await getDataPackagesWithProviderCode({
+    network: network && network !== "all" ? network : undefined,
+    providerId: providerId && providerId !== "all" ? providerId : undefined,
   });
 
   return {
     packages: result.packages as DataPackage[],
-    total: result.total,
-    page: result.page,
-    limit: result.limit,
-    totalPages: result.totalPages,
+    total: result.total
   };
 };
 
-export const DataPackageList = () => {
+export const DataPackageProviderList = () => {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [productId, setProductId] = useState("all");
-  const [page, setPage] = useState(1);
+  const [network, setNetwork] = useState("MTN");
+  const [providerId, setProviderId] = useState("all");
 
-  // Fetch products for dropdown
-  const { data: products } = useQuery({
-    queryKey: ["products-dropdown"],
-    queryFn: () => getProductsForDropdown(),
+  // Fetch providers for dropdown
+  const { data: providers } = useQuery({
+    queryKey: ["providers-dropdown"],
+    queryFn: () => getProvidersForDropdown(),
     staleTime: 300000, // 5 minutes
   });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const initialSearch = params.get("search") || "";
-    setSearch(initialSearch);
-    setDebouncedSearch(initialSearch);
-    setStatus(params.get("status") || "all");
-    setProductId(params.get("product_id") || "all");
-    setPage(Number(params.get("page")) || 1);
+    setNetwork(params.get("network") || "all");
+    setProviderId(params.get("provider_id") || "all");
   }, []);
 
   // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 500);
+ // useEffect(() => {
+  //  const timer = setTimeout(() => {
+      //setDebouncedSearch(search);
+      //setPage(1);
+    //}, 500);
 
-    return () => clearTimeout(timer);
-  }, [search]);
+    //return () => clearTimeout(timer);
+  //}, [search]);
 
-  // Update URL when debounced search changes (without page reload)
-  useEffect(() => {
-    // Skip initial render to prevent flicker
-    if (debouncedSearch === "" && status === "all" && productId === "all" && page === 1) {
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (status !== "all") params.set("status", status);
-    if (productId !== "all") params.set("product_id", productId);
-    if (page > 1) params.set("page", page.toString());
-
-    const newUrl = `/admin/data-packages${params.toString() ? `?${params.toString()}` : ""}`;
-    // Use replaceState to update URL without triggering navigation
-    if (window.location.pathname + window.location.search !== newUrl) {
-      window.history.replaceState({}, "", newUrl);
-    }
-  }, [debouncedSearch, status, productId, page]);
+ 
 
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ["dataPackages", page, debouncedSearch, status, productId],
-    queryFn: () => fetchDataPackages(page, debouncedSearch, status, productId),
+    queryKey: ["dataPackages", network, providerId],
+    queryFn: () => getDataPackagesWithProviderCode({ network, providerId }),
     retry: 1,
     keepPreviousData: true,
     staleTime: 30000,
   });
 
   const handleSearch = (value: string) => {
-    setSearch(value);
+    //setSearch(value);
   };
 
-  const handleStatusChange = (value: string) => {
-    setStatus(value);
-    setPage(1);
+  const handleNetworkChange = (value: string) => {
+    setNetwork(value);
+   // setPage(1);
   };
 
-  const handleProductChange = (value: string) => {
-    setProductId(value);
-    setPage(1);
+  const handleProviderChange = (value: string) => {
+    setProviderId(value);
+    //setPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    //setPage(newPage);
   };
 
   const formatCurrency = (amount: string) => {
@@ -170,17 +134,16 @@ export const DataPackageList = () => {
   };
 
   const packages = data?.packages || [];
-  const totalPages = data?.totalPages || 1;
-  const currentPage = data?.page || page;
+  const totalPages = data?.total || 1;
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Data Packages</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Provider's Data Packages</h2>
           <p className="text-muted-foreground">
-            Manage data packages for products
+            Manage data packages for providers
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -199,37 +162,31 @@ export const DataPackageList = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search packages..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <Select value={status} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={productId} onValueChange={handleProductChange}>
+      <div className="flex items-center gap-4 py-5">
+
+        <Select value={providerId} onValueChange={handleProviderChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Product" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Products</SelectItem>
-            {products?.map((product) => (
-              <SelectItem key={product.id} value={product.id}>
-                {product.product_name}
+            <SelectItem value="all">Select Provider</SelectItem>
+            {providers?.map((provider) => (
+              <SelectItem key={provider.id} value={provider.id}>
+                {provider.name}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={network} onValueChange={handleNetworkChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Select Network</SelectItem>
+            <SelectItem value="AIRTEL">Airtel</SelectItem>
+            <SelectItem value="MTN">MTN</SelectItem>
+            <SelectItem value="GLO">Glo</SelectItem>
+            <SelectItem value="9MOBILE">9Mobile</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -247,13 +204,13 @@ export const DataPackageList = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Description</TableHead>
-              <TableHead>Product</TableHead>
+              <TableHead>Network</TableHead>
               <TableHead>Data Code</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Value</TableHead>
               <TableHead>Duration</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Provider Status</TableHead>
+              <TableHead className="text-right">Provide Code</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -298,10 +255,10 @@ export const DataPackageList = () => {
             ) : (
               packages.map((pkg) => (
                 <TableRow key={pkg.id}>
-                  <TableCell className="font-medium"><div className="max-w-88 truncate">{pkg.description}</div></TableCell>
+                  <TableCell className="font-medium"><div className=" text-wrap">{pkg.description}</div></TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{pkg.vas_products.product_name}</div>
+                      <div className="font-medium">{pkg.vas_products.network}</div>
                       <div className="text-xs text-muted-foreground">
                         {pkg.vas_products.product_code}
                       </div>
@@ -311,33 +268,28 @@ export const DataPackageList = () => {
                   <TableCell>{formatCurrency(pkg.amount)}</TableCell>
                   <TableCell>{pkg.value}</TableCell>
                   <TableCell>{pkg.duration}</TableCell>
-                  <TableCell>
-                    <Badge variant={pkg.is_active ? "default" : "secondary"}>
-                      {pkg.is_active ? "Active" : "Inactive"}
-                    </Badge>
+                  <TableCell >
+                    <Select
+                      //value={status}
+                    //onValueChange={handleStatusChange}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Active</SelectItem>
+                        <SelectItem value="0">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/admin/data-packages/${pkg.id}`)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/admin/data-packages/${pkg.id}/edit`)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Input
+                      placeholder=" -- None --"
+                      //value={search}
+                      //onChange={(e) => handleSearch(e.target.value)}
+                      className=" w-[120px]"
+                      id={pkg.id}
+                    />
                   </TableCell>
                 </TableRow>
               ))
@@ -350,25 +302,10 @@ export const DataPackageList = () => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing page {currentPage} of {totalPages} ({data?.total || 0} total packages)
+            Showing page  ({data?.total || 0} total packages)
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1 || isFetching}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages || isFetching}
-            >
-              Next
-            </Button>
+            
           </div>
         </div>
       )}

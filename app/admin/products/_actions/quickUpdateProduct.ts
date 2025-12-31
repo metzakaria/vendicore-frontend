@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma";
 
+import redis from "@/lib/redis";
+
 interface QuickUpdateProductData {
   is_active?: boolean;
   preferred_provider_account_id?: string | null;
@@ -46,6 +48,13 @@ export const quickUpdateProduct = async (
       data: updateData,
     });
 
+    // delete redis cache
+    const product_cache_key = "product_"+product.product_code
+    await redis.del(product_cache_key);
+
+    //const product_cat_cache_key = "products_category_{category_code}"
+    //await redis.del(product_cat_cache_key);
+    
     return {
       success: true,
       product: {

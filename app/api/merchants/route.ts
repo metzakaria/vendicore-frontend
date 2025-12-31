@@ -84,7 +84,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Invalid JSON in request body",
+        },
+        { status: 400 }
+      );
+    }
     const result = await createMerchant(body);
 
     if (!result.success) {

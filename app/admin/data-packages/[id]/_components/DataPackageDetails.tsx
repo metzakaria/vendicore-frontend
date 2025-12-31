@@ -103,6 +103,22 @@ export const DataPackageDetails = ({ dataPackage }: DataPackageDetailsProps) => 
                   </div>
                 </div>
               </div>
+              <Separator />
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Plan Name</span>
+                <span className="text-sm text-right max-w-[60%]">{dataPackage.plan_name}</span>
+              </div>
+              <Separator />
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Short Description</span>
+                <span className="text-sm text-right max-w-[60%]">{dataPackage.short_desc}</span>
+              </div>
+              <Separator />
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-muted-foreground">network</span>
+                <span className="text-sm text-right max-w-[60%]">{dataPackage.network}</span>
+              </div>
+              
             </div>
           </CardContent>
         </Card>
@@ -133,20 +149,17 @@ export const DataPackageDetails = ({ dataPackage }: DataPackageDetailsProps) => 
                 <span className="text-sm font-medium text-muted-foreground">Duration</span>
                 <span className="text-sm font-medium">{dataPackage.duration}</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Timestamps */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Timestamps
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4">
+              <Separator />
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Payvantage Code</span>
+                <span className="text-sm text-right max-w-[60%]">{dataPackage.payvantage_code}</span>
+              </div>
+              <Separator />
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Creditswitch Code</span>
+                <span className="text-sm text-right max-w-[60%]">{dataPackage.creditswitch_code}</span>
+              </div>
+              <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Created At</span>
                 <span className="text-sm">{formatDateTime(dataPackage.created_at)}</span>
@@ -159,6 +172,8 @@ export const DataPackageDetails = ({ dataPackage }: DataPackageDetailsProps) => 
             </div>
           </CardContent>
         </Card>
+
+        
       </div>
     </div>
   );

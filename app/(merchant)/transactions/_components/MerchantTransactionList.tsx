@@ -8,6 +8,8 @@ import { getCategoriesForDropdown } from "../_actions/getCategoriesForDropdown";
 import { TransactionFilters } from "./TransactionFilters";
 import { TransactionStats } from "./TransactionStats";
 import { TransactionTable } from "./TransactionTable";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
+import { format } from "date-fns";
 
 const fetchTransactions = async (
   page: number,
@@ -77,6 +79,7 @@ export const MerchantTransactionList = () => {
   const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
   const [activeProductId, setActiveProductId] = useState("all");
   const [activeCategoryId, setActiveCategoryId] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch products and categories for dropdown
   const { data: products } = useQuery({
@@ -179,8 +182,60 @@ export const MerchantTransactionList = () => {
     transactionsCount: data?.transactions?.length,
   });
 
-  const handleExport = () => {
-    alert("Export functionality coming soon!");
+  const formatDateTime = (date: string | Date | null) => {
+    if (!date) return "N/A";
+    return format(new Date(date), "MMM dd, yyyy HH:mm");
+  };
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      // Fetch all transactions with current filters (no pagination)
+      const exportResult = await getMerchantTransactions({
+        page: 1,
+        limit: 10000, // Large limit to get all data
+        referenceNo: activeReferenceNo || undefined,
+        beneficiary: activeBeneficiary || undefined,
+        amount: activeAmount || undefined,
+        status: activeStatus !== "all" ? (activeStatus as "success" | "failed" | "pending") : undefined,
+        startDate: activeStartDate ? activeStartDate.toISOString() : undefined,
+        endDate: activeEndDate ? activeEndDate.toISOString() : undefined,
+        productId: activeProductId !== "all" ? activeProductId : undefined,
+        categoryId: activeCategoryId !== "all" ? activeCategoryId : undefined,
+      });
+
+      if (!exportResult || !exportResult.transactions || exportResult.transactions.length === 0) {
+        alert("No data to export");
+        return;
+      }
+
+      // Transform data for CSV export
+      const csvData = exportResult.transactions.map((tx: any) => ({
+        Date: formatDateTime(tx.created_at),
+        "Product Name": tx.vas_products?.product_name || "N/A",
+        "Product Code": tx.vas_products?.product_code || "N/A",
+        "Beneficiary Account": tx.beneficiary_account || "N/A",
+        Amount: tx.amount || "0",
+        "Discount Amount": tx.discount_amount || "0",
+        "Balance Before": tx.balance_before || "0",
+        "Balance After": tx.balance_after || "0",
+        Status: tx.status || "N/A",
+        "Merchant Reference": tx.merchant_ref || "N/A",
+        "Provider Reference": tx.provider_ref || "N/A",
+        Description: tx.description || "N/A",
+        "Is Reversed": tx.is_reverse ? "Yes" : "No",
+        "Reversed At": tx.reversed_at ? formatDateTime(tx.reversed_at) : "N/A",
+      }));
+
+      exportToCsv(csvData, "merchant_transactions");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -250,6 +305,7 @@ export const MerchantTransactionList = () => {
         onCategoryIdChange={setCategoryId}
         onSearch={handleSearch}
         onExport={handleExport}
+        isExporting={isExporting}
       />
 
       {/* Stats Cards */}

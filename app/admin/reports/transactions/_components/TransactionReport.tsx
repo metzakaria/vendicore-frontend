@@ -24,12 +24,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CalendarIcon, Download, Filter } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Download, Filter, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getTransactionReport } from "../../_actions/getTransactionReport";
 import { getMerchantsForDropdown } from "@/app/admin/funding/_actions/getMerchantsForDropdown";
 import { getProductsForDropdown } from "../../_actions/getProductsForDropdown";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
 
 export const TransactionReport = () => {
   const router = useRouter();
@@ -38,7 +39,9 @@ export const TransactionReport = () => {
   const [merchantId, setMerchantId] = useState<string>("all");
   const [productId, setProductId] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [amount, setAmount] = useState<string>("");
   const [page, setPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch merchants and products for dropdowns
   const { data: merchants } = useQuery({
@@ -63,6 +66,7 @@ export const TransactionReport = () => {
       merchantId,
       productId,
       status,
+      amount,
     ],
     queryFn: () =>
       getTransactionReport({
@@ -71,6 +75,7 @@ export const TransactionReport = () => {
         merchantId: merchantId !== "all" ? merchantId : undefined,
         productId: productId !== "all" ? productId : undefined,
         status: status !== "all" ? status : undefined,
+        amount: amount.trim() !== "" ? amount : undefined,
         page,
         limit: 50,
       }),
@@ -102,9 +107,55 @@ export const TransactionReport = () => {
     );
   };
 
-  const handleExport = () => {
-    // TODO: Implement CSV/PDF export
-    alert("Export functionality coming soon!");
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      // Fetch all transactions with current filters (no pagination)
+      const exportData = await getTransactionReport({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        merchantId: merchantId !== "all" ? merchantId : undefined,
+        productId: productId !== "all" ? productId : undefined,
+        status: status !== "all" ? status : undefined,
+        amount: amount.trim() !== "" ? amount : undefined,
+        page: 1,
+        limit: 10000, // Large limit to get all data
+      });
+
+      if (!exportData || !exportData.transactions || exportData.transactions.length === 0) {
+        alert("No data to export");
+        return;
+      }
+
+      // Transform data for CSV export
+      const csvData = exportData.transactions.map((tx: any) => ({
+        Date: tx.created_at ? formatDateTime(tx.created_at) : "N/A",
+        "Merchant Name": tx.vas_merchants?.business_name || "N/A",
+        "Merchant Code": tx.vas_merchants?.merchant_code || "N/A",
+        "Product Name": tx.vas_products?.product_name || "N/A",
+        "Product Code": tx.vas_products?.product_code || "N/A",
+        "Beneficiary Account": tx.beneficiary_account || "N/A",
+        Amount: tx.amount || "0",
+        "Discount Amount": tx.discount_amount || "0",
+        "Balance Before": tx.balance_before || "0",
+        "Balance After": tx.balance_after || "0",
+        Status: tx.status || "N/A",
+        "Merchant Reference": tx.merchant_ref || "N/A",
+        "Provider Reference": tx.provider_ref || "N/A",
+        Description: tx.description || "N/A",
+        "Is Reversed": tx.is_reverse ? "Yes" : "No",
+        "Reversed At": tx.reversed_at ? formatDateTime(tx.reversed_at) : "N/A",
+      }));
+
+      exportToCsv(csvData, "transaction_report");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -122,9 +173,18 @@ export const TransactionReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
+        <Button onClick={handleExport} disabled={isExporting}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
         </Button>
       </div>
 
@@ -137,7 +197,7 @@ export const TransactionReport = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Date</label>
               <Popover>
@@ -221,6 +281,17 @@ export const TransactionReport = () => {
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount</label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                step="0.01"
+                min="0"
+              />
             </div>
           </div>
         </CardContent>

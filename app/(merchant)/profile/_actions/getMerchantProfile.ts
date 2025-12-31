@@ -57,7 +57,7 @@ export const getMerchantProfile = async () => {
         current_balance: merchant.current_balance.toString(),
         account_type: merchant.account_type,
         daily_tranx_limit: merchant.daily_tranx_limit,
-        api_access_ip: merchant.api_access_ip,
+        api_access_ip: merchant.api_access_ips,
         is_active: merchant.is_active,
         created_at: merchant.created_at,
         updated_at: merchant.updated_at,

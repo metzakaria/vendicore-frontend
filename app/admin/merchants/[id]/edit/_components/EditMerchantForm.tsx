@@ -22,7 +22,7 @@ export const EditMerchantForm = ({ merchant }: EditMerchantFormProps) => {
         first_name: merchant.vas_users?.first_name,
         last_name: merchant.vas_users?.last_name,
         phone_number: merchant.vas_users?.phone_number,
-        api_access_ip: merchant.api_access_ip,
+        api_access_ip: merchant.api_access_ips,
         daily_tranx_limit: merchant.daily_tranx_limit,
         is_active: merchant.is_active,
       }}

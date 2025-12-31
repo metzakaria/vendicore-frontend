@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, Download, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarIcon, Download, Filter, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface TransactionFiltersProps {
@@ -37,6 +37,7 @@ interface TransactionFiltersProps {
   onCategoryIdChange: (value: string) => void;
   onSearch: () => void;
   onExport: () => void;
+  isExporting?: boolean;
 }
 
 export const TransactionFilters = ({
@@ -60,6 +61,7 @@ export const TransactionFilters = ({
   onCategoryIdChange,
   onSearch,
   onExport,
+  isExporting = false,
 }: TransactionFiltersProps) => {
   const [showFilters, setShowFilters] = useState(true);
 
@@ -199,9 +201,18 @@ export const TransactionFilters = ({
           />
         </div>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={onExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
+          <Button variant="secondary" onClick={onExport} disabled={isExporting}>
+            {isExporting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </>
+            )}
           </Button>
           <Button onClick={onSearch}>
             <Filter className="mr-2 h-4 w-4" />

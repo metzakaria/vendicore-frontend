@@ -68,10 +68,10 @@ export const MerchantSettings = () => {
       const result = await regenerateApiToken();
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["merchant-api-credentials"] });
-        setMessage({ type: "success", text: "API token regenerated successfully" });
+        setMessage({ type: "success", text: "API key regenerated successfully" });
         setTimeout(() => setMessage(null), 3000);
       } else {
-        setMessage({ type: "error", text: result.error || "Failed to regenerate API token" });
+        setMessage({ type: "error", text: result.error || "Failed to regenerate API key" });
         setTimeout(() => setMessage(null), 5000);
       }
     } catch (error) {
@@ -200,17 +200,17 @@ export const MerchantSettings = () => {
             API Credentials
           </CardTitle>
           <CardDescription>
-            Your API token and secret key for accessing the VAS API
+            Your API key and secret for accessing the VAS API
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* API Token */}
+          {/* API Key */}
           <div className="space-y-2">
-            <Label>API Token</Label>
+            <Label>API Key</Label>
             <div className="flex items-center gap-2">
               <Input
                 type={showApiToken ? "text" : "password"}
-                value={data?.api_token || ""}
+                value={data?.api_key || ""}
                 readOnly
                 className="font-mono"
               />
@@ -225,11 +225,11 @@ export const MerchantSettings = () => {
                   <Eye className="h-4 w-4" />
                 )}
               </Button>
-              {data?.api_token && (
+              {data?.api_key && (
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleCopy(data.api_token!, "API Token")}
+                  onClick={() => handleCopy(data.api_key!, "API Key")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -243,7 +243,7 @@ export const MerchantSettings = () => {
             <div className="flex items-center gap-2">
               <Input
                 type={showSecretKey ? "text" : "password"}
-                value={data?.api_secret_key || ""}
+                value={data?.api_secret || ""}
                 readOnly
                 className="font-mono"
               />
@@ -258,11 +258,11 @@ export const MerchantSettings = () => {
                   <Eye className="h-4 w-4" />
                 )}
               </Button>
-              {data?.api_secret_key && (
+              {data?.api_secret && (
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleCopy(data.api_secret_key!, "Secret Key")}
+                  onClick={() => handleCopy(data.api_secret!, "API Secret")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -270,20 +270,20 @@ export const MerchantSettings = () => {
             </div>
           </div>
 
-          {/* Token Info */}
+          {/* API Info */}
           <div className="grid gap-4 md:grid-cols-2 pt-2 border-t">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Token Created</p>
-              <p className="text-sm mt-1">{formatDateTime(data?.api_token_created)}</p>
+              <p className="text-sm font-medium text-muted-foreground">Key Updated</p>
+              <p className="text-sm mt-1">{formatDateTime(data?.api_key_updated_at)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Token Expires</p>
-              <p className="text-sm mt-1">{formatDateTime(data?.api_token_expire)}</p>
+              <p className="text-sm font-medium text-muted-foreground">Secret Updated</p>
+              <p className="text-sm mt-1">{formatDateTime(data?.api_secret_updated_at)}</p>
             </div>
-            {data?.api_access_ip && (
+            {data?.api_access_ips && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Allowed IP</p>
-                <p className="text-sm font-mono mt-1">{data.api_access_ip}</p>
+                <p className="text-sm font-medium text-muted-foreground">Allowed IPs</p>
+                <p className="text-sm font-mono mt-1">{data.api_access_ips}</p>
               </div>
             )}
           </div>
@@ -293,14 +293,14 @@ export const MerchantSettings = () => {
             <AlertDialogTrigger asChild>
               <Button variant="outline" disabled={isRegenerating}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`} />
-                {isRegenerating ? "Regenerating..." : "Regenerate API Token"}
+                {isRegenerating ? "Regenerating..." : "Regenerate API Key"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Regenerate API Token?</AlertDialogTitle>
+                <AlertDialogTitle>Regenerate API Key?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will generate a new API token and secret key. Your current API credentials will no longer work.
+                  This will generate a new API key and secret. Your current API credentials will no longer work.
                   Make sure to update your applications with the new credentials.
                 </AlertDialogDescription>
               </AlertDialogHeader>

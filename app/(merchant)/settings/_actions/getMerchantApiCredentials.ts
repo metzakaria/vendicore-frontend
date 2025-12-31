@@ -19,11 +19,11 @@ export const getMerchantApiCredentials = async () => {
     const merchant = await prisma.vas_merchants.findUnique({
       where: { id: merchantId },
       select: {
-        api_token: true,
-        api_secret_key: true,
-        api_token_created: true,
-        api_token_expire: true,
-        api_access_ip: true,
+        api_key: true,
+        api_secret: true,
+        api_key_updated_at: true,
+        api_secret_updated_at: true,
+        api_access_ips: true,
       },
     });
 
@@ -34,11 +34,11 @@ export const getMerchantApiCredentials = async () => {
     }
 
     return {
-      api_token: merchant.api_token || null,
-      api_secret_key: merchant.api_secret_key || null,
-      api_token_created: merchant.api_token_created,
-      api_token_expire: merchant.api_token_expire,
-      api_access_ip: merchant.api_access_ip || null,
+      api_key: merchant.api_key || null,
+      api_secret: merchant.api_secret || null,
+      api_key_updated_at: merchant.api_key_updated_at,
+      api_secret_updated_at: merchant.api_secret_updated_at,
+      api_access_ips: merchant.api_access_ips || null,
     };
   } catch (error) {
     console.error("Error fetching API credentials:", error);

@@ -41,20 +41,20 @@ export const regenerateApiToken = async () => {
     await prisma.vas_merchants.update({
       where: { id: merchantId },
       data: {
-        api_token: apiToken,
-        api_secret_key: apiSecretKey,
-        api_token_created: apiTokenCreated,
-        api_token_expire: apiTokenExpire,
+        api_key: apiToken,
+        api_secret: apiSecretKey,
+        api_key_updated_at: apiTokenCreated,
+        api_secret_updated_at: apiTokenExpire,
         updated_at: new Date(),
       },
     });
 
     return {
       success: true,
-      api_token: apiToken,
-      api_secret_key: apiSecretKey,
-      api_token_created: apiTokenCreated,
-      api_token_expire: apiTokenExpire,
+      api_key: apiToken,
+      api_secret: apiSecretKey,
+      api_key_updated_at: apiTokenCreated,
+      api_secret_updated_at: apiTokenExpire,
     };
   } catch (error) {
     console.error("Error regenerating API token:", error);

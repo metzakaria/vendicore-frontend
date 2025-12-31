@@ -78,7 +78,7 @@ export const updateMerchant = async (merchantId: string, data: UpdateMerchantFor
         website: data.website || null,
         account_type: data.account_type,
         daily_tranx_limit: data.daily_tranx_limit || null,
-        api_access_ip: data.api_access_ip || null,
+        api_access_ips: data.api_access_ip || null,
         is_active: data.is_active,
         updated_at: new Date(),
       },

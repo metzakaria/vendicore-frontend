@@ -16,15 +16,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CalendarIcon, Download } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Download, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getRevenueReport } from "../../_actions/getRevenueReport";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
 
 export const ProductReport = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["product-report", startDate?.toISOString(), endDate?.toISOString()],
@@ -44,6 +46,43 @@ export const ProductReport = () => {
     }).format(Number(amount));
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      // Fetch all product data with current filters
+      const exportData = await getRevenueReport({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      });
+
+      if (!exportData || !exportData.productRevenue || exportData.productRevenue.length === 0) {
+        alert("No data to export");
+        return;
+      }
+
+      // Transform data for CSV export
+      const csvData = exportData.productRevenue.map((product: any) => {
+        const avgRevenue = Number(product.total_amount) / product.transaction_count || 0;
+        return {
+          "Product Name": product.product_name || "N/A",
+          "Product Code": product.product_code || "N/A",
+          "Total Transactions": product.transaction_count || "0",
+          "Total Revenue": product.total_amount || "0",
+          "Average Revenue": avgRevenue.toString(),
+        };
+      });
+
+      exportToCsv(csvData, "product_usage_report");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -59,9 +98,18 @@ export const ProductReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => alert("Export coming soon!")}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
+        <Button onClick={handleExport} disabled={isExporting}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
         </Button>
       </div>
 

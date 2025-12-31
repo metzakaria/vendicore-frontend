@@ -23,11 +23,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CalendarIcon, Download } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Download, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getFundingReport } from "../../_actions/getFundingReport";
 import { getMerchantsForDropdown } from "@/app/admin/funding/_actions/getMerchantsForDropdown";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
 
 export const FundingReport = () => {
   const router = useRouter();
@@ -35,6 +36,7 @@ export const FundingReport = () => {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [merchantId, setMerchantId] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
@@ -83,6 +85,57 @@ export const FundingReport = () => {
     return <Badge variant="secondary">Pending</Badge>;
   };
 
+  const getStatusText = (funding: any) => {
+    if (!funding.is_active) return "Rejected";
+    if (funding.is_approved) return "Approved";
+    return "Pending";
+  };
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      // Fetch all funding data with current filters
+      const exportData = await getFundingReport({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        merchantId: merchantId !== "all" ? merchantId : undefined,
+        status: status as "all" | "approved" | "pending" | "rejected",
+      });
+
+      if (!exportData || !exportData.fundings || exportData.fundings.length === 0) {
+        alert("No data to export");
+        return;
+      }
+
+      // Transform data for CSV export
+      const csvData = exportData.fundings.map((funding: any) => ({
+        "Funding Reference": funding.funding_ref || "N/A",
+        "Merchant Name": funding.vas_merchants?.business_name || "N/A",
+        "Merchant Code": funding.vas_merchants?.merchant_code || "N/A",
+        Amount: funding.amount || "0",
+        Description: funding.description || "N/A",
+        Status: getStatusText(funding),
+        "Balance Before": funding.balance_before || "0",
+        "Balance After": funding.balance_after || "0",
+        Source: funding.source || "N/A",
+        "Created At": formatDateTime(funding.created_at),
+        "Created By": funding.vas_users_vas_merchant_funding_created_byTovas_users?.username || "N/A",
+        "Approved At": formatDateTime(funding.approved_at),
+        "Approved By": funding.vas_users_vas_merchant_funding_approved_byTovas_users?.username || "N/A",
+        "Is Credited": funding.is_credited ? "Yes" : "No",
+      }));
+
+      exportToCsv(csvData, "funding_report");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -98,9 +151,18 @@ export const FundingReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => alert("Export coming soon!")}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
+        <Button onClick={handleExport} disabled={isExporting}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
         </Button>
       </div>
 

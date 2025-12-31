@@ -8,6 +8,11 @@ export const createDataPackageSchema = z.object({
   duration: z.string().min(1, "Duration is required").max(50, "Duration must be less than 50 characters"),
   value: z.string().min(1, "Value is required").max(50, "Value must be less than 50 characters"),
   product_id: z.string().min(1, "Product is required"),
+  creditswitch_code: z.string().min(1, "Product is required"),
+  payvantage_code: z.string().min(1, "Product is required"),
+  network: z.string().min(1, "Product is required"),
+  plan_name: z.string().min(1, "Product is required"),
+  short_desc: z.string().min(1, "Product is required"),
   is_active: z.boolean().default(true),
 });
 
@@ -21,6 +26,11 @@ export const updateDataPackageSchema = z.object({
   duration: z.string().min(1, "Duration is required").max(50, "Duration must be less than 50 characters"),
   value: z.string().min(1, "Value is required").max(50, "Value must be less than 50 characters"),
   product_id: z.string().min(1, "Product is required"),
+  creditswitch_code: z.string().min(1, "Product is required"),
+  payvantage_code: z.string().min(1, "Product is required"),
+  network: z.string().min(1, "Product is required"),
+  plan_name: z.string().min(1, "Product is required"),
+  short_desc: z.string().min(1, "Product is required"),
   is_active: z.boolean().default(true),
 });
 

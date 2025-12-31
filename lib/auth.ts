@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          //throw new Error("Invalid email or password");
+          throw new Error("Invalid email or password");
         }
 
         // Determine user role

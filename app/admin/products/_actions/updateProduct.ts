@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import redis from "@/lib/redis";
 import type { UpdateProductFormData } from "@/lib/validations/product";
 
 export const updateProduct = async (productId: string, data: UpdateProductFormData) => {
@@ -59,6 +60,10 @@ export const updateProduct = async (productId: string, data: UpdateProductFormDa
         updated_at: new Date(),
       },
     });
+
+    // delete redis cache
+    const product_cache_key = "product_"+product.product_code
+    await redis.del(product_cache_key);
 
     // Serialize BigInt values to strings for JSON
     return {

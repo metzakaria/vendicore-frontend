@@ -23,17 +23,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CalendarIcon, Download } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Download, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getMerchantReport } from "../../_actions/getMerchantReport";
 import { getMerchantsForDropdown } from "@/app/admin/funding/_actions/getMerchantsForDropdown";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
 
 export const MerchantReport = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [merchantId, setMerchantId] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
@@ -65,6 +67,43 @@ export const MerchantReport = () => {
     }).format(Number(amount));
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      // Fetch all merchant data with current filters
+      const exportData = await getMerchantReport({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        merchantId: merchantId !== "all" ? merchantId : undefined,
+      });
+
+      if (!exportData || !exportData.merchants || exportData.merchants.length === 0) {
+        alert("No data to export");
+        return;
+      }
+
+      // Transform data for CSV export
+      const csvData = exportData.merchants.map((merchant: any) => ({
+        "Merchant Code": merchant.merchant_code || "N/A",
+        "Business Name": merchant.business_name || "N/A",
+        Email: merchant.email || "N/A",
+        "Total Transactions": merchant.total_transactions || "0",
+        "Total Amount": merchant.total_amount || "0",
+        "Current Balance": merchant.current_balance || "0",
+        Status: merchant.is_active ? "Active" : "Inactive",
+      }));
+
+      exportToCsv(csvData, "merchant_report");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -80,9 +119,18 @@ export const MerchantReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => alert("Export coming soon!")}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
+        <Button onClick={handleExport} disabled={isExporting}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
         </Button>
       </div>
 

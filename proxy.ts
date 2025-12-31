@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export default withAuth(
-  function middleware(req: NextRequest & { nextauth?: { token?: { role?: string } } }) {
+  function proxy(req: NextRequest & { nextauth?: { token?: { role?: string } } }) {
     const token = req.nextauth?.token;
     const path = req.nextUrl.pathname;
 

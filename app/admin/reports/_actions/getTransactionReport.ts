@@ -8,6 +8,7 @@ interface TransactionReportParams {
   merchantId?: string;
   productId?: string;
   status?: string;
+  amount?: string;
   page?: number;
   limit?: number;
 }
@@ -46,6 +47,14 @@ export const getTransactionReport = async (params: TransactionReportParams = {})
     // Status filter
     if (params.status && params.status !== "all") {
       where.status = params.status;
+    }
+
+    // Amount filter (exact match)
+    if (params.amount && params.amount.trim() !== "") {
+      const amountValue = parseFloat(params.amount);
+      if (!isNaN(amountValue)) {
+        where.amount = amountValue;
+      }
     }
 
     const [transactions, total, summary] = await Promise.all([

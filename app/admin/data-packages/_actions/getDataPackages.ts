@@ -89,3 +89,63 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
   }
 };
 
+
+
+interface GetDataPackagesProvidersParams {
+  network?: string;
+  providerId?: string;
+}
+export const getDataPackagesWithProviderCode = async (params: GetDataPackagesProvidersParams = {}) => {
+  try {
+    
+    const network = params.network || "none";
+    const providerId = params.providerId || "";
+  console.log("========================"+network);
+    const where: any = {};
+
+      where.network = network;
+ 
+
+    const [packages, total] = await Promise.all([
+      prisma.vas_data_packages.findMany({
+        where,
+        orderBy: {
+          value: "asc",
+        },
+        include: {
+          vas_products: {
+            select: {
+              id: true,
+              product_name: true,
+              product_code: true,
+            },
+          },
+        },
+      }),
+      prisma.vas_data_packages.count({ where }),
+    ]);
+
+    // Serialize BigInt values to strings for JSON
+    const serializedPackages = packages.map((pkg: any) => ({
+      ...pkg,
+      id: pkg.id.toString(),
+      product_id: pkg.product_id.toString(),
+      amount: pkg.amount.toString(),
+      vas_products: {
+        ...pkg.vas_products,
+        id: pkg.vas_products.id.toString(),
+      },
+    }));
+
+    return {
+      packages: serializedPackages,
+      total,
+    };
+  } catch (error) {
+    console.error("Error fetching data packages:", error);
+    return {
+      packages: [],
+      total: 0,
+    };
+  }
+};

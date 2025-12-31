@@ -283,36 +283,36 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-4">
                   <div>
-                    <span className="text-xs text-muted-foreground">API Token</span>
+                    <span className="text-xs text-muted-foreground">API Key</span>
                     <p className="text-sm font-mono mt-1 break-all">
-                      {merchant.api_token ? `${merchant.api_token.substring(0, 30)}...` : "N/A"}
+                      {merchant.api_key ? `${merchant.api_key.substring(0, 30)}...` : "N/A"}
                     </p>
                   </div>
                   <Separator className="opacity-50" />
                   <div>
-                    <span className="text-xs text-muted-foreground">Secret Key</span>
+                    <span className="text-xs text-muted-foreground">API Secret</span>
                     <p className="text-sm font-mono mt-1 break-all">
-                      {merchant.api_secret_key ? `${merchant.api_secret_key.substring(0, 30)}...` : "N/A"}
+                      {merchant.api_secret ? `${merchant.api_secret.substring(0, 30)}...` : "N/A"}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs text-muted-foreground">Allowed IP</span>
-                    <p className="text-sm font-medium mt-1">{merchant.api_access_ip || "N/A"}</p>
+                    <p className="text-sm font-medium mt-1">{merchant.api_access_ips || "N/A"}</p>
                   </div>
                   <Separator className="opacity-50" />
                   <div>
-                    <span className="text-xs text-muted-foreground">Token Created</span>
+                    <span className="text-xs text-muted-foreground">Key Updated</span>
                     <p className="text-sm font-medium mt-1">
-                      {merchant.api_token_created ? formatDateTime(merchant.api_token_created) : "N/A"}
+                      {merchant.api_key_updated_at ? formatDateTime(merchant.api_key_updated_at) : "N/A"}
                     </p>
                   </div>
                   <Separator className="opacity-50" />
                   <div>
-                    <span className="text-xs text-muted-foreground">Token Expires</span>
+                    <span className="text-xs text-muted-foreground">Secret Updated</span>
                     <p className="text-sm font-medium mt-1">
-                      {merchant.api_token_expire ? formatDateTime(merchant.api_token_expire) : "N/A"}
+                      {merchant.api_secret_updated_at ? formatDateTime(merchant.api_secret_updated_at) : "N/A"}
                     </p>
                   </div>
                 </div>
