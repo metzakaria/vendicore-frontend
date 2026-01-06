@@ -12,6 +12,7 @@ interface GetTransactionsParams {
   merchant_id?: string;
   product_id?: string;
   category_id?: string;
+  provider_id?: string;
   date_from?: string;
   date_to?: string;
 }
@@ -28,6 +29,7 @@ export const getTransactions = async (params: GetTransactionsParams = {}) => {
     const merchantId = params.merchant_id;
     const productId = params.product_id;
     const categoryId = params.category_id;
+    const providerId = params.provider_id;
     const dateFrom = params.date_from;
     const dateTo = params.date_to;
 
@@ -65,6 +67,14 @@ export const getTransactions = async (params: GetTransactionsParams = {}) => {
 
     if (categoryId && categoryId !== "all") {
       where.product_category_id = BigInt(categoryId);
+    }
+
+    if (providerId && providerId !== "all") {
+      where.vas_provider_accounts = {
+        is: {
+          provider_id: BigInt(providerId),
+        },
+      };
     }
 
     if (dateFrom) {

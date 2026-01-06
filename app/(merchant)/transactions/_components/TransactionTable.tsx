@@ -66,8 +66,8 @@ export const TransactionTable = ({
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[720px] text-xs sm:text-sm">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[140px]">Date</TableHead>

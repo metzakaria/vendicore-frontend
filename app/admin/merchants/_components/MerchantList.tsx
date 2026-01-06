@@ -30,6 +30,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMerchants } from "../_actions/getMerchants";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Merchant {
   id: string;
@@ -179,13 +180,13 @@ export const MerchantList = () => {
         </Button>
       </div>
 
-      <div className="rounded-md border relative">
-        {isFetching && !isLoading && (
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 z-10">
-            <div className="h-full bg-primary animate-pulse" style={{ width: "30%" }} />
-          </div>
-        )}
-        <Table>
+      <div className="relative rounded-md border">
+        <TableOverlayLoader
+          isVisible={isLoading || isFetching}
+          label={isLoading ? "Loading merchants..." : "Updating merchants..."}
+        />
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[720px] text-xs sm:text-sm">
           <TableHeader>
             <TableRow>
               <TableHead>Business Name</TableHead>
@@ -301,6 +302,7 @@ export const MerchantList = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {data && data.totalPages > 1 && (

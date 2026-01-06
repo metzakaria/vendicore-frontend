@@ -25,12 +25,6 @@ export const getDashboardStats = async (params?: GetDashboardStatsParams) => {
       endDate.setHours(23, 59, 59, 999);
     }
     
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
     const [
       totalMerchants,
       todayTransactions,
@@ -155,4 +149,3 @@ export const getDashboardStats = async (params?: GetDashboardStatsParams) => {
     };
   }
 };
-

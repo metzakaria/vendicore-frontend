@@ -29,9 +29,11 @@ import { getTransactions } from "../_actions/getTransactions";
 import { getMerchantsForDropdown } from "../_actions/getMerchantsForDropdown";
 import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
 import { getCategoriesForDropdown } from "../_actions/getCategoriesForDropdown";
+import { getProvidersForDropdown } from "../../providers/_actions/getProvidersForDropdown";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Transaction {
   id: string;
@@ -83,6 +85,7 @@ const fetchTransactions = async (
   merchantId: string,
   productId: string,
   categoryId: string,
+  providerId: string,
   startDate: string,
   endDate: string
 ): Promise<TransactionsResponse> => {
@@ -95,6 +98,7 @@ const fetchTransactions = async (
     merchant_id: merchantId && merchantId !== "all" ? merchantId : undefined,
     product_id: productId && productId !== "all" ? productId : undefined,
     category_id: categoryId && categoryId !== "all" ? categoryId : undefined,
+    provider_id: providerId && providerId !== "all" ? providerId : undefined,
     date_from: startDate || undefined,
     date_to: endDate || undefined,
   });
@@ -127,6 +131,7 @@ export const TransactionList = () => {
   const [merchantId, setMerchantId] = useState("all");
   const [productId, setProductId] = useState("all");
   const [categoryId, setCategoryId] = useState("all");
+  const [providerId, setProviderId] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>(today);
   const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
   const [page, setPage] = useState(1);
@@ -138,6 +143,7 @@ export const TransactionList = () => {
   const [activeMerchantId, setActiveMerchantId] = useState("all");
   const [activeProductId, setActiveProductId] = useState("all");
   const [activeCategoryId, setActiveCategoryId] = useState("all");
+  const [activeProviderId, setActiveProviderId] = useState("all");
   const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
   const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
 
@@ -157,6 +163,12 @@ export const TransactionList = () => {
   const { data: categories } = useQuery({
     queryKey: ["categories-dropdown"],
     queryFn: () => getCategoriesForDropdown(),
+    staleTime: 300000,
+  });
+
+  const { data: providers } = useQuery({
+    queryKey: ["providers-dropdown"],
+    queryFn: () => getProvidersForDropdown(),
     staleTime: 300000,
   });
 
@@ -187,6 +199,10 @@ export const TransactionList = () => {
     const initialCategoryId = params.get("category") || "all";
     setCategoryId(initialCategoryId);
     setActiveCategoryId(initialCategoryId);
+
+    const initialProviderId = params.get("provider") || "all";
+    setProviderId(initialProviderId);
+    setActiveProviderId(initialProviderId);
     
     // Initialize dates from URL or use today as default
     const urlStartDate = params.get("startDate");
@@ -222,6 +238,7 @@ export const TransactionList = () => {
       activeMerchantId,
       activeProductId,
       activeCategoryId,
+      activeProviderId,
       activeStartDate?.toISOString() || null,
       activeEndDate?.toISOString() || null,
     ],
@@ -234,6 +251,7 @@ export const TransactionList = () => {
         activeMerchantId,
         activeProductId,
         activeCategoryId,
+        activeProviderId,
         activeStartDate ? activeStartDate.toISOString() : "",
         activeEndDate ? activeEndDate.toISOString() : ""
       ),
@@ -249,6 +267,7 @@ export const TransactionList = () => {
     setActiveMerchantId(merchantId);
     setActiveProductId(productId);
     setActiveCategoryId(categoryId);
+    setActiveProviderId(providerId);
     setActiveStartDate(startDate);
     setActiveEndDate(endDate);
     setPage(1);
@@ -261,6 +280,7 @@ export const TransactionList = () => {
     if (merchantId !== "all") params.set("merchant", merchantId);
     if (productId !== "all") params.set("product", productId);
     if (categoryId !== "all") params.set("category", categoryId);
+    if (providerId !== "all") params.set("provider", providerId);
     if (startDate) params.set("startDate", startDate.toISOString());
     if (endDate) params.set("endDate", endDate.toISOString());
 
@@ -479,6 +499,19 @@ export const TransactionList = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={providerId} onValueChange={setProviderId} disabled={!providers}>
+              <SelectTrigger>
+                <SelectValue placeholder={providers ? "Provider" : "Loading providers..."} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Providers</SelectItem>
+                {providers?.map((provider) => (
+                  <SelectItem key={provider.id} value={provider.id}>
+                    {provider.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -501,17 +534,14 @@ export const TransactionList = () => {
         )}
       </Card>
 
-      {/* Progress bar for background fetching */}
-      {isFetching && !isLoading && (
-        <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-full animate-pulse bg-primary/20" />
-        </div>
-      )}
-
       {/* Table */}
-      <div className="rounded-md border">
-        <div className="overflow-x-auto">
-          <Table>
+      <div className="relative rounded-md border">
+        <TableOverlayLoader
+          isVisible={isLoading || isFetching}
+          label={isLoading ? "Loading transactions..." : "Updating transactions..."}
+        />
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[900px] text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[140px]">Date & Time</TableHead>

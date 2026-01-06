@@ -36,6 +36,7 @@ import { getCategoriesForDropdown } from "../_actions/getCategoriesForDropdown";
 import { getProviderAccountsForDropdown } from "../_actions/getProviderAccountsForDropdown";
 import { quickUpdateProduct } from "../_actions/quickUpdateProduct";
 import { getProductById } from "../_actions/getProductById";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Product {
   id: string;
@@ -288,16 +289,14 @@ export const ProductList = () => {
         </Select>
       </div>
 
-      {/* Progress bar for background fetching */}
-      {isFetching && !isLoading && (
-        <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-full animate-pulse bg-primary/20" />
-        </div>
-      )}
-
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="relative rounded-md border">
+        <TableOverlayLoader
+          isVisible={isLoading || isFetching}
+          label={isLoading ? "Loading products..." : "Updating products..."}
+        />
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[720px] text-xs sm:text-sm">
           <TableHeader>
             <TableRow>
               <TableHead>Product Name</TableHead>
@@ -403,6 +402,7 @@ export const ProductList = () => {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}

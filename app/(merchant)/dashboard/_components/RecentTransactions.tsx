@@ -53,7 +53,8 @@ export const RecentTransactions = ({
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
-          <Table>
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-[680px] text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
@@ -104,7 +105,8 @@ export const RecentTransactions = ({
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </div>
         {transactions.length > 0 && (
           <div className="mt-4 text-center">

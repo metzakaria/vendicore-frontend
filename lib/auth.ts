@@ -88,6 +88,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    signOut: "/login", // Ensure this is set
+    error: "/login",
   },
   session: {
     strategy: "jwt",

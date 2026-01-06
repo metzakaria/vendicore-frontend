@@ -41,60 +41,62 @@ export const RecentTransactions = () => {
         <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : !transactions || transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No transactions found
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Merchant</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id.toString()}>
-                  <TableCell className="font-medium">
-                    {transaction.vas_merchants?.business_name || "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.vas_products?.product_name || "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat("en-NG", {
-                      style: "currency",
-                      currency: "NGN",
-                    }).format(Number(transaction.amount))}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={getStatusColor(transaction.status)}
-                    >
-                      {transaction.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {transaction.created_at
-                      ? format(new Date(transaction.created_at), "MMM dd, HH:mm")
-                      : "N/A"}
-                  </TableCell>
-                </TableRow>
+        <div className="overflow-x-auto">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
-            </TableBody>
-          </Table>
-        )}
+            </div>
+          ) : !transactions || transactions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No transactions found
+            </p>
+          ) : (
+            <Table className="min-w-[640px] text-xs sm:text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">Merchant</TableHead>
+                  <TableHead className="whitespace-nowrap">Product</TableHead>
+                  <TableHead className="whitespace-nowrap">Amount</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="whitespace-nowrap">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((transaction) => (
+                  <TableRow key={transaction.id.toString()}>
+                    <TableCell className="font-medium truncate max-w-[150px]">
+                      {transaction.vas_merchants?.business_name || "N/A"}
+                    </TableCell>
+                    <TableCell className="truncate max-w-[120px]">
+                      {transaction.vas_products?.product_name || "N/A"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {new Intl.NumberFormat("en-NG", {
+                        style: "currency",
+                        currency: "NGN",
+                      }).format(Number(transaction.amount))}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={getStatusColor(transaction.status)}
+                      >
+                        {transaction.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {transaction.created_at
+                        ? format(new Date(transaction.created_at), "MMM dd, HH:mm")
+                        : "N/A"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

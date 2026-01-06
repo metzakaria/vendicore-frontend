@@ -204,8 +204,8 @@ export const MerchantDiscountList = () => {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[640px] text-xs sm:text-sm">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[200px]">Product</TableHead>

@@ -30,6 +30,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUsers } from "../_actions/getUsers";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface User {
   id: string;
@@ -251,9 +252,13 @@ export const UserList = () => {
       )}
 
       {/* Table */}
-      <div className="rounded-md border">
-        <div className="overflow-x-auto">
-          <Table>
+      <div className="relative rounded-md border">
+        <TableOverlayLoader
+          isVisible={isLoading || isFetching}
+          label={isLoading ? "Loading users..." : "Updating users..."}
+        />
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[880px] text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]">User</TableHead>
