@@ -112,9 +112,9 @@ export const DataPackageForm = ({ mode, packageId, initialData }: DataPackageFor
           setError(result.error || "Failed to create data package");
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
+        (err instanceof Error ? err.message : String(err)) ||
         `An error occurred while ${isEditMode ? "updating" : "creating"} the data package`
       );
     } finally {

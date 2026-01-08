@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import React from "react"; // Import React to use React.ElementType
 
 interface TransactionStatusBadgeProps {
   status: string;
@@ -7,7 +8,7 @@ interface TransactionStatusBadgeProps {
 }
 
 export const TransactionStatusBadge = ({ status, showIcon = true }: TransactionStatusBadgeProps) => {
-  const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string; icon: any }> = {
+  const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string; icon: React.ElementType }> = { // Changed any to React.ElementType
     success: {
       variant: "default",
       className: "bg-green-500 hover:bg-green-600 text-white border-green-500",
@@ -15,7 +16,7 @@ export const TransactionStatusBadge = ({ status, showIcon = true }: TransactionS
     },
     failed: {
       variant: "destructive",
-      className: "",
+      className: "bg-red-500/10 text-red-700 dark:text-red-400", // Added class for consistency
       icon: XCircle,
     },
     pending: {

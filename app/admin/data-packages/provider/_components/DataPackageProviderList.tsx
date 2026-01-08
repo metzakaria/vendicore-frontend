@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Table,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"; // Badge is used
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,13 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Eye, MoreHorizontal, Pencil, Upload } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Plus, Upload } from "lucide-react"; // Removed unused icons
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDataPackagesWithProviderCode } from "../../_actions/getDataPackages";
@@ -42,10 +36,16 @@ interface DataPackage {
   value: string;
   is_active: boolean;
   created_at: Date | null;
+  network: string; // Added network
+  plan_name: string; // Added plan_name
+  short_desc: string; // Added short_desc
+  payvantage_code: string; // Added payvantage_code
+  creditswitch_code: string; // Added creditswitch_code
   vas_products: {
     id: string;
     product_name: string;
     product_code: string;
+    network: string; // Added network to vas_products
   };
 }
 
@@ -54,25 +54,26 @@ interface DataPackagesResponse {
   total: number;
 }
 
-const fetchDataPackages = async (
-  network: string,
-  providerId: string
-): Promise<DataPackagesResponse> => {
-  const result = await getDataPackagesWithProviderCode({
-    network: network && network !== "all" ? network : undefined,
-    providerId: providerId && providerId !== "all" ? providerId : undefined,
-  });
+// fetchDataPackages is unused
+// const fetchDataPackages = async (
+//   network: string,
+//   providerId: string
+// ): Promise<DataPackagesResponse> => {
+//   const result = await getDataPackagesWithProviderCode({
+//     network: network && network !== "all" ? network : undefined,
+//     providerId: providerId && providerId !== "all" ? providerId : undefined,
+//   });
 
-  return {
-    packages: result.packages as DataPackage[],
-    total: result.total
-  };
-};
+//   return {
+//     packages: result.packages as DataPackage[],
+//     total: result.total
+//   };
+// };
 
 export const DataPackageProviderList = () => {
   const router = useRouter();
-  const [network, setNetwork] = useState("MTN");
-  const [providerId, setProviderId] = useState("all");
+  const [network, setNetwork] = useState(() => new URLSearchParams(window.location.search).get("network") || "all"); // Changed default to "all"
+  const [providerId, setProviderId] = useState(() => new URLSearchParams(window.location.search).get("provider_id") || "all");
 
   // Fetch providers for dropdown
   const { data: providers } = useQuery({
@@ -81,23 +82,18 @@ export const DataPackageProviderList = () => {
     staleTime: 300000, // 5 minutes
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setNetwork(params.get("network") || "all");
-    setProviderId(params.get("provider_id") || "all");
-  }, []);
+  // Removed useEffect for initializing from URL params
+  // useEffect(() => { ... }, []);
 
   // Debounce search input
- // useEffect(() => {
+  // useEffect(() => {
   //  const timer = setTimeout(() => {
-      //setDebouncedSearch(search);
-      //setPage(1);
-    //}, 500);
+  //      setDebouncedSearch(search);
+  //      setPage(1);
+  //    }, 500);
 
-    //return () => clearTimeout(timer);
+  //return () => clearTimeout(timer);
   //}, [search]);
-
- 
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["dataPackages", network, providerId],
@@ -107,9 +103,10 @@ export const DataPackageProviderList = () => {
     staleTime: 30000,
   });
 
-  const handleSearch = (value: string) => {
-    //setSearch(value);
-  };
+  // handleSearch and value are unused
+  // const handleSearch = (value: string) => {
+  //   //setSearch(value);
+  // };
 
   const handleNetworkChange = (value: string) => {
     setNetwork(value);
@@ -121,9 +118,10 @@ export const DataPackageProviderList = () => {
     //setPage(1);
   };
 
-  const handlePageChange = (newPage: number) => {
-    //setPage(newPage);
-  };
+  // handlePageChange and newPage are unused
+  // const handlePageChange = (newPage: number) => {
+  //   //setPage(newPage);
+  // };
 
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-NG", {
@@ -141,7 +139,7 @@ export const DataPackageProviderList = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Provider's Data Packages</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Provider&apos;s Data Packages</h2>
           <p className="text-muted-foreground">
             Manage data packages for providers
           </p>

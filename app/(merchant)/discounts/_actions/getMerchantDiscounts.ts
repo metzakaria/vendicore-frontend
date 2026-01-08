@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetMerchantDiscountsParams {
   page?: number;
@@ -33,7 +34,7 @@ export const getMerchantDiscounts = async (params: GetMerchantDiscountsParams = 
     const productId = params.productId;
     const discountType = params.discountType;
 
-    const where: any = {
+    const where: Prisma.vas_merchant_discountWhereInput = {
       merchant_id: merchantId,
     };
 
@@ -68,8 +69,21 @@ export const getMerchantDiscounts = async (params: GetMerchantDiscountsParams = 
       prisma.vas_merchant_discount.count({ where }),
     ]);
 
+    // Define the type for discount based on the Prisma query result
+    type DiscountWithProduct = Prisma.vas_merchant_discountGetPayload<{
+      include: {
+        vas_products: {
+          select: {
+            id: true;
+            product_name: true;
+            product_code: true;
+          };
+        };
+      };
+    }>;
+
     // Serialize BigInt values to strings for JSON
-    const serializedDiscounts = discounts.map((discount: any) => ({
+    const serializedDiscounts = discounts.map((discount: DiscountWithProduct) => ({
       ...discount,
       id: discount.id.toString(),
       merchant_id: discount.merchant_id.toString(),

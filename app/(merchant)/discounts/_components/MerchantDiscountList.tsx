@@ -25,6 +25,25 @@ import { Filter } from "lucide-react";
 import { format } from "date-fns";
 import { getMerchantDiscounts } from "../_actions/getMerchantDiscounts";
 import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
+
+// Define the interface for a single discount item based on the serialized output
+interface DiscountItem {
+  id: string;
+  merchant_id: string;
+  product_id: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: string;
+  is_active: boolean;
+  created_at: string | Date;
+  updated_at: string | Date | null;
+  vas_products: {
+    id: string;
+    product_name: string;
+    product_code: string;
+  } | null;
+  // Add other properties if they are part of the serialized discount
+}
 
 const fetchDiscounts = async (
   page: number,
@@ -48,13 +67,13 @@ const fetchDiscounts = async (
 };
 
 export const MerchantDiscountList = () => {
-  const [productId, setProductId] = useState("all");
-  const [discountType, setDiscountType] = useState("all");
-  const [page, setPage] = useState(1);
+  const [productId, setProductId] = useState(() => new URLSearchParams(window.location.search).get("product") || "all");
+  const [discountType, setDiscountType] = useState(() => new URLSearchParams(window.location.search).get("discountType") || "all");
+  const [page, setPage] = useState(() => Number(new URLSearchParams(window.location.search).get("page")) || 1);
   
   // Active filter values (applied when button is clicked)
-  const [activeProductId, setActiveProductId] = useState("all");
-  const [activeDiscountType, setActiveDiscountType] = useState("all");
+  const [activeProductId, setActiveProductId] = useState(productId);
+  const [activeDiscountType, setActiveDiscountType] = useState(discountType);
 
   // Fetch products for dropdown
   const { data: products } = useQuery({
@@ -63,20 +82,7 @@ export const MerchantDiscountList = () => {
     staleTime: 300000,
   });
 
-  // Initialize from URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    
-    const initialProductId = params.get("product") || "all";
-    setProductId(initialProductId);
-    setActiveProductId(initialProductId);
-    
-    const initialDiscountType = params.get("discountType") || "all";
-    setDiscountType(initialDiscountType);
-    setActiveDiscountType(initialDiscountType);
-    
-    setPage(Number(params.get("page")) || 1);
-  }, []);
+  // Removed useEffect for initializing from URL params
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: [
@@ -203,7 +209,8 @@ export const MerchantDiscountList = () => {
           <CardTitle>Discount List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <div className="w-full overflow-x-auto">
               <Table className="min-w-[640px] text-xs sm:text-sm">
                 <TableHeader>
@@ -242,7 +249,7 @@ export const MerchantDiscountList = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    discounts.map((discount: any) => (
+                    discounts.map((discount: DiscountItem) => (
                       <TableRow key={discount.id} className="hover:bg-muted/50">
                         <TableCell>
                           <div className="text-sm font-medium">{discount.vas_products?.product_name || "N/A"}</div>

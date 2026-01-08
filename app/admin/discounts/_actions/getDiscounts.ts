@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetDiscountsParams {
   page?: number;
@@ -23,7 +24,7 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     const merchantId = params.merchant_id;
     const productId = params.product_id;
 
-    const where: any = {};
+    const where: Prisma.vas_merchant_discountWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -53,6 +54,32 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     if (productId && productId !== "all") {
       where.product_id = BigInt(productId);
     }
+
+    type DiscountWithIncludes = Prisma.vas_merchant_discountGetPayload<{
+      include: {
+        vas_merchants: {
+          select: {
+            id: true;
+            merchant_code: true;
+            business_name: true;
+          };
+        };
+        vas_products: {
+          select: {
+            id: true;
+            product_name: true;
+            product_code: true;
+          };
+        };
+        vas_users_vas_merchant_discount_updated_byTovas_users: {
+          select: {
+            id: true;
+            username: true;
+            email: true;
+          };
+        };
+      };
+    }>;
 
     const [discounts, total] = await Promise.all([
       prisma.vas_merchant_discount.findMany({
@@ -90,7 +117,7 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     ]);
 
     // Serialize BigInt values to strings for JSON
-    const serializedDiscounts = discounts.map((discount: any) => ({
+    const serializedDiscounts = discounts.map((discount: DiscountWithIncludes) => ({
       ...discount,
       id: discount.id.toString(),
       merchant_id: discount.merchant_id.toString(),

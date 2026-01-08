@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetRecentMerchantTransactionsParams {
   limit?: number;
@@ -24,7 +25,7 @@ export const getRecentMerchantTransactions = async (params: GetRecentMerchantTra
 
     const merchantId = BigInt(session.user.merchantId);
 
-    const where: any = {
+    const where: Prisma.vas_transactionsWhereInput = {
       merchant_id: merchantId,
     };
 
@@ -56,8 +57,20 @@ export const getRecentMerchantTransactions = async (params: GetRecentMerchantTra
       },
     });
 
+    // Define the type for tx based on the Prisma query result
+    type TransactionWithProduct = Prisma.vas_transactionsGetPayload<{
+      include: {
+        vas_products: {
+          select: {
+            product_name: true;
+            product_code: true;
+          };
+        };
+      };
+    }>;
+
     // Serialize BigInt values
-    const serializedTransactions = transactions.map((tx: any) => ({
+    const serializedTransactions = transactions.map((tx: TransactionWithProduct) => ({
       ...tx,
       id: tx.id.toString(),
       merchant_id: tx.merchant_id.toString(),

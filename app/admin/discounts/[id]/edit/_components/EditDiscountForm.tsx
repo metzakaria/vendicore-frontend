@@ -34,8 +34,36 @@ import {
 } from "@/lib/validations/discount";
 import { updateDiscount } from "../../../_actions/updateDiscount";
 
+// Re-using the interface defined in DiscountDetails.tsx
+interface DiscountDetailsItem {
+  id: string; // Serialized BigInt
+  discount_type: string;
+  discount_value: string; // Serialized Decimal
+  is_active: boolean;
+  created_at: string | Date | null;
+  updated_at: string | Date | null;
+  merchant_id: string; // Serialized BigInt
+  product_id: string; // Serialized BigInt
+
+  vas_merchants: {
+    id: string; // Serialized BigInt
+    merchant_code: string;
+    business_name: string;
+  };
+  vas_products: {
+    id: string; // Serialized BigInt
+    product_name: string;
+    product_code: string;
+    vas_product_categories: {
+      name: string;
+      category_code: string;
+    };
+  };
+  // Add other properties from vas_merchant_discount model if used in the component
+}
+
 interface EditDiscountFormProps {
-  discount: any;
+  discount: DiscountDetailsItem;
 }
 
 export const EditDiscountForm = ({ discount }: EditDiscountFormProps) => {
@@ -67,9 +95,9 @@ export const EditDiscountForm = ({ discount }: EditDiscountFormProps) => {
       } else {
         setError(result.error || "Failed to update discount");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message || "An error occurred while updating the discount"
+        (err instanceof Error ? err.message : String(err)) || "An error occurred while updating the discount"
       );
     } finally {
       setIsLoading(false);

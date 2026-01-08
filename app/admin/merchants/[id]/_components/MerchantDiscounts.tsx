@@ -35,6 +35,7 @@ import { getDiscounts } from "@/app/admin/discounts/_actions/getDiscounts";
 import { getProductsForMerchant } from "@/app/admin/discounts/_actions/getProductsForMerchant";
 import { getDiscountsByMerchant } from "@/app/admin/discounts/_actions/getDiscountsByMerchant";
 import { bulkUpdateDiscounts } from "@/app/admin/discounts/_actions/bulkUpdateDiscounts";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface MerchantDiscountsProps {
   merchantId: string;
@@ -349,86 +350,64 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
             </Select>
           </div>
           
-          {isLoading && !data ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : queryError ? (
-            <div className="text-center text-destructive py-8">
-              <p>Error loading discounts. Please try again.</p>
-              <p className="text-xs mt-2">
-                {queryError instanceof Error ? queryError.message : String(queryError)}
-              </p>
-            </div>
-          ) : discounts.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              No discounts found.
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Discount Type</TableHead>
-                      <TableHead>Discount Value</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created At</TableHead>
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Discount Type</TableHead>
+                  <TableHead>Discount Value</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {discounts.map((discount: any) => (
-                      <TableRow key={discount.id}>
-                        <TableCell>
-                          <div className="text-sm font-medium">{discount.vas_products?.product_name || "N/A"}</div>
-                          <div className="text-xs text-muted-foreground">{discount.vas_products?.product_code || ""}</div>
-                        </TableCell>
-                        <TableCell className="text-sm capitalize">{discount.discount_type}</TableCell>
-                        <TableCell className="text-sm font-medium">
-                          {formatDiscount(discount.discount_type, discount.discount_value)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={discount.is_active ? "default" : "secondary"}>
-                            {discount.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">{formatDateTime(discount.created_at)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing page {currentPage} of {totalPages} ({data?.total || 0} total discounts)
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1 || isFetching}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage >= totalPages || isFetching}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                  ))
+                ) : queryError ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-destructive py-8">
+                      Error loading discounts.
+                    </TableCell>
+                  </TableRow>
+                ) : discounts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      No discounts for this merchant.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  discounts.map((discount: any) => (
+                    <TableRow key={discount.id}>
+                      <TableCell>
+                        <div className="text-sm font-medium">{discount.vas_products?.product_name || "N/A"}</div>
+                        <div className="text-xs text-muted-foreground">{discount.vas_products?.product_code || ""}</div>
+                      </TableCell>
+                      <TableCell className="text-sm capitalize">{discount.discount_type}</TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {formatDiscount(discount.discount_type, discount.discount_value)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={discount.is_active ? "default" : "secondary"}>
+                          {discount.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{formatDateTime(discount.created_at)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
 

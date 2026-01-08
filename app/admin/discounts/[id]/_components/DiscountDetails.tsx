@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Building2, Package, Calendar, Hash, Pencil, Percent, Tag, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Package, Calendar, Pencil, Percent, Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,8 +20,36 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteDiscount } from "../../_actions/deleteDiscount";
 
+// Define the shape of the serialized discount object
+interface DiscountDetailsItem {
+  id: string; // Serialized BigInt
+  discount_type: string;
+  discount_value: string; // Serialized Decimal
+  is_active: boolean;
+  created_at: string | Date | null;
+  updated_at: string | Date | null;
+  merchant_id: string; // Serialized BigInt
+  product_id: string; // Serialized BigInt
+
+  vas_merchants: {
+    id: string; // Serialized BigInt
+    merchant_code: string;
+    business_name: string;
+  };
+  vas_products: {
+    id: string; // Serialized BigInt
+    product_name: string;
+    product_code: string;
+    vas_product_categories: {
+      name: string;
+      category_code: string;
+    };
+  };
+  // Add other properties from vas_merchant_discount model if used in the component
+}
+
 interface DiscountDetailsProps {
-  discount: any;
+  discount: DiscountDetailsItem;
 }
 
 export const DiscountDetails = ({ discount }: DiscountDetailsProps) => {
@@ -59,8 +87,8 @@ export const DiscountDetails = ({ discount }: DiscountDetailsProps) => {
         setDeleteError(result.error || "Failed to delete discount");
         setIsDeleting(false);
       }
-    } catch (err: any) {
-      setDeleteError(err.message || "An error occurred while deleting the discount");
+    } catch (err: unknown) { // Changed to unknown
+      setDeleteError((err instanceof Error ? err.message : String(err)) || "An error occurred while deleting the discount");
       setIsDeleting(false);
     }
   };

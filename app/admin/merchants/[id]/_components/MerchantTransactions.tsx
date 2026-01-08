@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity } from "lucide-react";
 import { getMerchantTransactions } from "../_actions/getMerchantTransactions";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Transaction {
   id: string;
@@ -158,6 +159,7 @@ export const MerchantTransactions = ({ merchantId }: MerchantTransactionsProps) 
       </CardHeader>
       <CardContent>
         <div className="rounded-md border relative">
+          <TableOverlayLoader isVisible={isLoading} />
           {isFetching && !isLoading && (
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 z-10">
               <div className="h-full bg-primary animate-pulse" style={{ width: "30%" }} />

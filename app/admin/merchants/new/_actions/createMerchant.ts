@@ -66,7 +66,7 @@ export const createMerchant = async (data: CreateMerchantFormData) => {
     }
 
     // Generate username from email
-    let username = generateUsernameFromEmail(data.email);
+    const username = generateUsernameFromEmail(data.email);
     
     // Check if username already exists, if so append numbers
     let usernameExists = true;

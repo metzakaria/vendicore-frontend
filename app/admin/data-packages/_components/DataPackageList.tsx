@@ -82,11 +82,11 @@ const fetchDataPackages = async (
 
 export const DataPackageList = () => {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [productId, setProductId] = useState("all");
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search); // Initialize debouncedSearch with initial search
+  const [status, setStatus] = useState(() => new URLSearchParams(window.location.search).get("status") || "all");
+  const [productId, setProductId] = useState(() => new URLSearchParams(window.location.search).get("product_id") || "all");
+  const [page, setPage] = useState(() => Number(new URLSearchParams(window.location.search).get("page")) || 1);
 
   // Fetch products for dropdown
   const { data: products } = useQuery({

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Calendar, CreditCard, Building2, User, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Building2, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +8,44 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 
+// Define a type for the included user details
+type UserDetails = {
+  id: string;
+  username: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+};
+
+// Define the shape of the serialized funding object
+interface FundingDetails {
+  funding_ref: string;
+  amount: string;
+  balance_before: string;
+  balance_after: string;
+  description: string;
+  source: string;
+  is_approved: boolean;
+  is_credited: boolean;
+  is_active: boolean;
+  created_at: string | Date;
+  approved_at: string | Date | null;
+  merchant_id: string;
+  created_by: string;
+  approved_by: string | null;
+
+  vas_merchants: {
+    id: string;
+    merchant_code: string;
+    business_name: string;
+    current_balance: string;
+  };
+  vas_users_vas_merchant_funding_created_byTovas_users: UserDetails;
+  vas_users_vas_merchant_funding_approved_byTovas_users: UserDetails | null;
+}
+
 interface MerchantFundingDetailsProps {
-  funding: any;
+  funding: FundingDetails;
 }
 
 export const MerchantFundingDetails = ({ funding }: MerchantFundingDetailsProps) => {

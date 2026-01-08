@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { getRecentTransactions } from "../_actions/getRecentTransactions";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
@@ -41,30 +42,40 @@ export const RecentTransactions = () => {
         <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : !transactions || transactions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No transactions found
-            </p>
-          ) : (
-            <Table className="min-w-[640px] text-xs sm:text-sm">
-              <TableHeader>
+        <div className="relative overflow-x-auto rounded-md border">
+          <TableOverlayLoader isVisible={isLoading} />
+          <Table className="min-w-[640px] text-xs sm:text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Merchant</TableHead>
+                <TableHead className="whitespace-nowrap">Product</TableHead>
+                <TableHead className="whitespace-nowrap">Amount</TableHead>
+                <TableHead className="whitespace-nowrap">Status</TableHead>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  </TableRow>
+                ))
+              ) : !transactions || transactions.length === 0 ? (
                 <TableRow>
-                  <TableHead className="whitespace-nowrap">Merchant</TableHead>
-                  <TableHead className="whitespace-nowrap">Product</TableHead>
-                  <TableHead className="whitespace-nowrap">Amount</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="whitespace-nowrap">Date</TableHead>
+                  <TableCell
+                    colSpan={5}
+                    className="text-sm text-muted-foreground text-center py-8"
+                  >
+                    No transactions found
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((transaction) => (
+              ) : (
+                transactions.map((transaction) => (
                   <TableRow key={transaction.id.toString()}>
                     <TableCell className="font-medium truncate max-w-[150px]">
                       {transaction.vas_merchants?.business_name || "N/A"}
@@ -88,14 +99,17 @@ export const RecentTransactions = () => {
                     </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap">
                       {transaction.created_at
-                        ? format(new Date(transaction.created_at), "MMM dd, HH:mm")
+                        ? format(
+                            new Date(transaction.created_at),
+                            "MMM dd, HH:mm"
+                          )
                         : "N/A"}
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

@@ -15,9 +15,38 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { TransactionDetailModal } from "./TransactionDetailModal";
 import { TransactionStatusBadge } from "../../_components/TransactionStatusBadge";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
+
+// Define the interface for a single transaction item based on the serialized output
+interface TransactionTableItem {
+  id: string;
+  merchant_id: string;
+  product_id: string;
+  provider_account_id: string | null;
+  amount: string;
+  discount_amount: string;
+  balance_before: string;
+  balance_after: string;
+  merchant_ref: string;
+  provider_ref: string | null;
+  beneficiary_account: string;
+  status: string;
+  is_reverse: boolean;
+  reversed_at: string | Date | null;
+  created_at: string | Date;
+  updated_at: string | Date | null;
+  vas_products: {
+    product_name: string;
+    product_code: string;
+  } | null;
+  vas_provider_accounts: {
+    account_name: string;
+  } | null;
+  // Add other properties from vas_transactions model if they are used
+}
 
 interface TransactionTableProps {
-  transactions: any[];
+  transactions: TransactionTableItem[]; // Use the new interface
   isLoading: boolean;
   isFetching: boolean;
   error: Error | null;
@@ -65,7 +94,8 @@ export const TransactionTable = ({
           <CardTitle>Transaction History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <div className="w-full overflow-x-auto">
               <Table className="min-w-[720px] text-xs sm:text-sm">
                 <TableHeader>
@@ -106,7 +136,7 @@ export const TransactionTable = ({
                       </TableCell>
                     </TableRow>
                   ) : (
-                    transactions.map((tx: any) => (
+                    transactions.map((tx: TransactionTableItem) => (
                       <TableRow
                         key={tx.id}
                         className="hover:bg-muted/50 cursor-pointer"

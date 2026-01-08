@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetMerchantFundingRequestsParams {
   page?: number;
@@ -33,7 +34,7 @@ export const getMerchantFundingRequests = async (params: GetMerchantFundingReque
     const limit = params.limit || 20;
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.vas_merchant_fundingWhereInput = {
       merchant_id: merchantId,
     };
 
@@ -97,8 +98,26 @@ export const getMerchantFundingRequests = async (params: GetMerchantFundingReque
       prisma.vas_merchant_funding.count({ where }),
     ]);
 
+    // Define the type for funding based on the Prisma query result
+    type FundingWithUsers = Prisma.vas_merchant_fundingGetPayload<{
+      include: {
+        vas_users_vas_merchant_funding_created_byTovas_users: {
+          select: {
+            username: true;
+            email: true;
+          };
+        };
+        vas_users_vas_merchant_funding_approved_byTovas_users: {
+          select: {
+            username: true;
+            email: true;
+          };
+        };
+      };
+    }>;
+
     // Serialize BigInt values
-    const serializedFundings = fundings.map((funding: any) => ({
+    const serializedFundings = fundings.map((funding: FundingWithUsers) => ({
       ...funding,
       id: funding.funding_ref,
       merchant_id: funding.merchant_id.toString(),
@@ -128,4 +147,3 @@ export const getMerchantFundingRequests = async (params: GetMerchantFundingReque
     };
   }
 };
-

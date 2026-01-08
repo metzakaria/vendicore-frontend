@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetMerchantTransactionsParams {
   page?: number;
@@ -44,7 +45,7 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
       params,
     });
 
-    const where: any = {
+    const where: Prisma.vas_transactionsWhereInput = {
       merchant_id: merchantId,
     };
 
@@ -95,7 +96,7 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
     }
 
     // Helper to serialize BigInt for logging
-    const serializeBigInt = (obj: any): any => {
+    const serializeBigInt = (obj: any): any => { // Keeping this as any for now, as it's a logging helper
       if (obj === null || obj === undefined) return obj;
       if (typeof obj === 'bigint') return obj.toString();
       if (Array.isArray(obj)) return obj.map(serializeBigInt);
@@ -165,8 +166,25 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
 
     console.log(`getMerchantTransactions found ${transactions.length} transactions (total: ${total})`);
 
+    // Define the type for tx based on the Prisma query result
+    type TransactionWithIncludes = Prisma.vas_transactionsGetPayload<{
+      include: {
+        vas_products: {
+          select: {
+            product_name: true;
+            product_code: true;
+          };
+        };
+        vas_provider_accounts: {
+          select: {
+            account_name: true;
+          };
+        };
+      };
+    }>;
+
     // Serialize BigInt values
-    const serializedTransactions = transactions.map((tx: any) => ({
+    const serializedTransactions = transactions.map((tx: TransactionWithIncludes) => ({
       ...tx,
       id: tx.id.toString(),
       merchant_id: tx.merchant_id.toString(),

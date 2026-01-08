@@ -1,14 +1,45 @@
 "use client";
 
-import { ArrowLeft, Package, Calendar, Hash, Pencil, Tag } from "lucide-react";
+import { ArrowLeft, Package, Pencil, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+// Define the shape of the serialized data package object
+interface DataPackageDetailsItem {
+  id: string; // Serialized BigInt
+  data_code: string;
+  tariff_id: string | null;
+  amount: string; // Serialized Decimal
+  description: string;
+  duration: string;
+  value: string;
+  network: string;
+  plan_name: string;
+  short_desc: string;
+  payvantage_code: string;
+  creditswitch_code: string;
+  is_active: boolean;
+  created_at: string | Date | null;
+  updated_at: string | Date | null;
+  product_id: string; // Serialized BigInt
+
+  vas_products: {
+    id: string; // Serialized BigInt
+    product_name: string;
+    product_code: string;
+    vas_product_categories: {
+      name: string;
+      category_code: string;
+    };
+  };
+  // Add other properties from vas_data_packages model if used in the component
+}
+
 interface DataPackageDetailsProps {
-  dataPackage: any;
+  dataPackage: DataPackageDetailsItem;
 }
 
 export const DataPackageDetails = ({ dataPackage }: DataPackageDetailsProps) => {

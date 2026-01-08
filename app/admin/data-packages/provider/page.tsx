@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect, notFound } from "next/navigation";
-import { getDataPackageById } from "../_actions/getDataPackageById";
+import { redirect } from "next/navigation";
 import { DataPackageProviderList } from "./_components/DataPackageProviderList";
 
 export default async function DataPackagePageProvider() {

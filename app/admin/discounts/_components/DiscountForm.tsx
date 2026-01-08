@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -28,7 +28,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { 
   createDiscountSchema, 
   updateDiscountSchema,
@@ -117,10 +116,9 @@ export const DiscountForm = ({ mode, discountId, initialData }: DiscountFormProp
           setError(result.error || "Failed to create discount");
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
-        `An error occurred while ${isEditMode ? "updating" : "creating"} the discount`
+        (err instanceof Error ? err.message : String(err)) || "An error occurred while updating the discount"
       );
     } finally {
       setIsLoading(false);

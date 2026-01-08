@@ -15,9 +15,31 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { TransactionDetailModal } from "../../transactions/_components/TransactionDetailModal";
 import { TransactionStatusBadge } from "../../_components/TransactionStatusBadge";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
+
+// Define the interface for a single transaction item based on the serialized output
+interface TransactionItem {
+  id: string;
+  merchant_id: string;
+  product_id: string;
+  amount: string;
+  discount_amount: string;
+  balance_before: string;
+  balance_after: string;
+  merchant_ref: string;
+  provider_ref: string | null;
+  beneficiary_account: string;
+  status: string;
+  created_at: string | Date; // Assuming date is string after serialization or Date before
+  vas_products: {
+    product_name: string;
+    product_code: string;
+  } | null;
+  // Add other properties if they are part of the serialized transaction
+}
 
 interface RecentTransactionsProps {
-  transactions: any[];
+  transactions: TransactionItem[]; // Use the new interface
   isLoading?: boolean;
 }
 
@@ -52,7 +74,8 @@ export const RecentTransactions = ({
         <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="relative rounded-md border">
+          <TableOverlayLoader isVisible={isLoading} />
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[680px] text-xs sm:text-sm">
             <TableHeader>
@@ -92,7 +115,7 @@ export const RecentTransactions = ({
                   >
                     <TableCell className="text-sm">{formatDateTime(tx.created_at)}</TableCell>
                     <TableCell>
-                      <div className="text-sm">{tx.vas_products?.product_name || "N/A"}</div>
+                      <div className="text-sm font-medium">{tx.vas_products?.product_name || "N/A"}</div>
                       <div className="text-xs text-muted-foreground">
                         {tx.vas_products?.product_code || ""}
                       </div>

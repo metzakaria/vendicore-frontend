@@ -20,8 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, CalendarIcon, Filter, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Eye, 
+  CalendarIcon, 
+  Download, 
+  Search,
+  X,
+  Filter
+} from "lucide-react";
 import { exportToCSV } from "@/lib/utils/csvExport";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +41,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
+import { cn } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -121,9 +129,6 @@ export const TransactionList = () => {
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
   
-  // UI state
-  const [showFilters, setShowFilters] = useState(true);
-  
   // Filter state
   const [referenceNo, setReferenceNo] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -136,7 +141,7 @@ export const TransactionList = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
   const [page, setPage] = useState(1);
   
-  // Active filter values (applied when Search button is clicked)
+  // Active filter values
   const [activeReferenceNo, setActiveReferenceNo] = useState("");
   const [activeBeneficiary, setActiveBeneficiary] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
@@ -147,7 +152,7 @@ export const TransactionList = () => {
   const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
   const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
 
-  // Fetch merchants, products, categories for dropdowns
+  // Fetch dropdown data
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
     queryFn: () => getMerchantsForDropdown(),
@@ -176,13 +181,11 @@ export const TransactionList = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
-    const initialReferenceNo = params.get("referenceNo") || "";
-    setReferenceNo(initialReferenceNo);
-    setActiveReferenceNo(initialReferenceNo);
+    setReferenceNo(params.get("referenceNo") || "");
+    setActiveReferenceNo(params.get("referenceNo") || "");
     
-    const initialBeneficiary = params.get("beneficiary") || "";
-    setBeneficiary(initialBeneficiary);
-    setActiveBeneficiary(initialBeneficiary);
+    setBeneficiary(params.get("beneficiary") || "");
+    setActiveBeneficiary(params.get("beneficiary") || "");
     
     const initialStatus = params.get("status") || "all";
     setStatus(initialStatus);
@@ -204,25 +207,19 @@ export const TransactionList = () => {
     setProviderId(initialProviderId);
     setActiveProviderId(initialProviderId);
     
-    // Initialize dates from URL or use today as default
+    // Initialize dates
     const urlStartDate = params.get("startDate");
     const urlEndDate = params.get("endDate");
     if (urlStartDate) {
       const start = new Date(urlStartDate);
       setStartDate(start);
       setActiveStartDate(start);
-    } else {
-      setStartDate(today);
-      setActiveStartDate(today);
     }
     if (urlEndDate) {
       const end = new Date(urlEndDate);
       end.setHours(23, 59, 59, 999);
       setEndDate(end);
       setActiveEndDate(end);
-    } else {
-      setEndDate(todayEnd);
-      setActiveEndDate(todayEnd);
     }
     
     setPage(Number(params.get("page")) || 1);
@@ -260,7 +257,6 @@ export const TransactionList = () => {
   });
 
   const handleSearch = () => {
-    // Apply filters when Search button is clicked
     setActiveReferenceNo(referenceNo);
     setActiveBeneficiary(beneficiary);
     setActiveStatus(status);
@@ -288,6 +284,30 @@ export const TransactionList = () => {
     window.history.replaceState({}, "", newUrl);
   };
 
+  const handleResetFilters = () => {
+    setReferenceNo("");
+    setBeneficiary("");
+    setStatus("all");
+    setMerchantId("all");
+    setProductId("all");
+    setCategoryId("all");
+    setProviderId("all");
+    setStartDate(today);
+    setEndDate(todayEnd);
+    
+    setActiveReferenceNo("");
+    setActiveBeneficiary("");
+    setActiveStatus("all");
+    setActiveMerchantId("all");
+    setActiveProductId("all");
+    setActiveCategoryId("all");
+    setActiveProviderId("all");
+    setActiveStartDate(today);
+    setActiveEndDate(todayEnd);
+    
+    setPage(1);
+    window.history.replaceState({}, "", "/admin/transactions");
+  };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -298,7 +318,6 @@ export const TransactionList = () => {
       return;
     }
 
-    // Prepare data for CSV export
     const exportData = transactions.map((tx) => ({
       "Transaction ID": tx.id,
       "Merchant": tx.vas_merchants?.business_name || "N/A",
@@ -361,176 +380,279 @@ export const TransactionList = () => {
   const totalPages = data?.totalPages || 1;
   const currentPage = data?.page || page;
 
+  // Calculate active filter count
+  const activeFilterCount = [
+    activeReferenceNo,
+    activeBeneficiary,
+    activeStatus !== "all",
+    activeMerchantId !== "all",
+    activeProductId !== "all",
+    activeCategoryId !== "all",
+    activeProviderId !== "all",
+    activeStartDate && activeStartDate.toDateString() !== today.toDateString(),
+    activeEndDate && activeEndDate.toDateString() !== todayEnd.toDateString(),
+  ].filter(Boolean).length;
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transactions</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold tracking-tight">Transactions</h2>
+          <p className="text-muted-foreground text-sm">
             View and manage all transactions
           </p>
         </div>
         <Button
           variant="outline"
+          size="sm"
           onClick={handleExport}
           disabled={!transactions || transactions.length === 0}
         >
           <Download className="mr-2 h-4 w-4" />
-          Export CSV
+          Export
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader 
-          className="cursor-pointer select-none"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </div>
-            {showFilters ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+      {/* Two-Row Filter Layout */}
+      <Card className="p-4">
+        {/* Row 1: Quick Search and Dates */}
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Filters</span>
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5">
+                {activeFilterCount}
+              </Badge>
             )}
-          </CardTitle>
-        </CardHeader>
-        {showFilters && (
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "PPP") : "Start Date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      const startOfDay = new Date(date);
-                      startOfDay.setHours(0, 0, 0, 0);
-                      setStartDate(startOfDay);
-                    } else {
-                      setStartDate(undefined);
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "PPP") : "End Date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      const endOfDay = new Date(date);
-                      endOfDay.setHours(23, 59, 59, 999);
-                      setEndDate(endOfDay);
-                    } else {
-                      setEndDate(undefined);
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            <Input
-              placeholder="Reference No"
-              value={referenceNo}
-              onChange={(e) => setReferenceNo(e.target.value)}
-            />
-            <Input
-              placeholder="Beneficiary"
-              value={beneficiary}
-              onChange={(e) => setBeneficiary(e.target.value)}
-            />
-            <Select value={merchantId} onValueChange={setMerchantId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Merchant" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Merchants</SelectItem>
-                {merchants?.map((merchant) => (
-                  <SelectItem key={merchant.id} value={merchant.id}>
-                    {merchant.business_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={productId} onValueChange={setProductId} disabled={!products}>
-              <SelectTrigger>
-                <SelectValue placeholder={products ? "Product" : "Loading products..."} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Products</SelectItem>
-                {products?.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.product_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={categoryId} onValueChange={setCategoryId} disabled={!categories}>
-              <SelectTrigger>
-                <SelectValue placeholder={categories ? "Category" : "Loading categories..."} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={providerId} onValueChange={setProviderId} disabled={!providers}>
-              <SelectTrigger>
-                <SelectValue placeholder={providers ? "Provider" : "Loading providers..."} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Providers</SelectItem>
-                {providers?.map((provider) => (
-                  <SelectItem key={provider.id} value={provider.id}>
-                    {provider.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-          <div className="mt-4 flex justify-end">
-            <Button onClick={handleSearch}>
-              <Filter className="mr-2 h-4 w-4" />
-              Search
+          
+          <Input
+            placeholder="Reference No"
+            value={referenceNo}
+            onChange={(e) => setReferenceNo(e.target.value)}
+            className="h-9 w-40"
+          />
+          
+          <Input
+            placeholder="Beneficiary"
+            value={beneficiary}
+            onChange={(e) => setBeneficiary(e.target.value)}
+            className="h-9 w-40"
+          />
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 w-40 justify-start text-left font-normal",
+                  !startDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, "MM/dd/yyyy") : "Start date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => date && setStartDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 w-40 justify-start text-left font-normal",
+                  !endDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, "MM/dd/yyyy") : "End date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => date && setEndDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <Button onClick={handleSearch} size="sm" className="h-9">
+            <Search className="mr-2 h-4 w-4" />
+            Search
+          </Button>
+          
+          {activeFilterCount > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleResetFilters}
+              className="h-9 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+              Clear
             </Button>
+          )}
+        </div>
+
+        {/* Row 2: Dropdown Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="h-9 w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={merchantId} onValueChange={setMerchantId}>
+            <SelectTrigger className="h-9 w-40">
+              <SelectValue placeholder="Merchant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Merchants</SelectItem>
+              {merchants?.map((merchant) => (
+                <SelectItem key={merchant.id} value={merchant.id}>
+                  {merchant.business_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={productId} onValueChange={setProductId}>
+            <SelectTrigger className="h-9 w-40">
+              <SelectValue placeholder="Product" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              {products?.map((product) => (
+                <SelectItem key={product.id} value={product.id}>
+                  {product.product_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger className="h-9 w-40">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories?.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={providerId} onValueChange={setProviderId}>
+            <SelectTrigger className="h-9 w-40">
+              <SelectValue placeholder="Provider" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Providers</SelectItem>
+              {providers?.map((provider) => (
+                <SelectItem key={provider.id} value={provider.id}>
+                  {provider.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Active Filters */}
+        {activeFilterCount > 0 && (
+          <div className="mt-3 pt-3 border-t">
+            <div className="flex flex-wrap gap-2">
+              {activeReferenceNo && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Ref: {activeReferenceNo}
+                  <button
+                    onClick={() => {
+                      setReferenceNo("");
+                      setActiveReferenceNo("");
+                    }}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeBeneficiary && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  To: {activeBeneficiary}
+                  <button
+                    onClick={() => {
+                      setBeneficiary("");
+                      setActiveBeneficiary("");
+                    }}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeStatus !== "all" && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Status: {activeStatus}
+                  <button
+                    onClick={() => {
+                      setStatus("all");
+                      setActiveStatus("all");
+                    }}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeMerchantId !== "all" && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Merchant
+                  <button
+                    onClick={() => {
+                      setMerchantId("all");
+                      setActiveMerchantId("all");
+                    }}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeProviderId !== "all" && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Provider
+                  <button
+                    onClick={() => {
+                      setProviderId("all");
+                      setActiveProviderId("all");
+                    }}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
           </div>
-        </CardContent>
         )}
       </Card>
 
@@ -623,7 +745,7 @@ export const TransactionList = () => {
                         {transaction.vas_products.product_name}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
-                        via: {transaction?.vas_provider_accounts.account_name}
+                        via: {transaction?.vas_provider_accounts?.account_name || "N/A"}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -676,7 +798,7 @@ export const TransactionList = () => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing page {currentPage} of {totalPages} ({data?.total || 0} total transactions)
+            Page {currentPage} of {totalPages} • {data?.total || 0} transactions
           </div>
           <div className="flex gap-2">
             <Button
@@ -701,4 +823,3 @@ export const TransactionList = () => {
     </div>
   );
 };
-

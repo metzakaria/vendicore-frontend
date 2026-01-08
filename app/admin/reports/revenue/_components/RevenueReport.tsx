@@ -19,6 +19,7 @@ import { ArrowLeft, CalendarIcon, Download, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getRevenueReport } from "../../_actions/getRevenueReport";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 export const RevenueReport = () => {
   const router = useRouter();
@@ -165,7 +166,8 @@ export const RevenueReport = () => {
           <CardDescription>Top products by revenue</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <Table>
               <TableHeader>
                 <TableRow>
@@ -222,7 +224,8 @@ export const RevenueReport = () => {
           <CardDescription>Top merchants by revenue</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <Table>
               <TableHeader>
                 <TableRow>

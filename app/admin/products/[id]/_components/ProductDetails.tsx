@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Package, Server, Calendar, Hash, Pencil } from "lucide-react";
+import { ArrowLeft, Package, Server, Calendar, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

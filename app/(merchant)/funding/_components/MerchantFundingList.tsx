@@ -28,6 +28,35 @@ import { CalendarIcon, Filter, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { getMerchantFundingRequests } from "../_actions/getMerchantFundingRequests";
 import { FundingDetailModal } from "./FundingDetailModal";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
+
+// Define a type for the included user details
+type SimpleUser = {
+  username: string;
+  email: string;
+};
+
+// Define the interface for a single serialized funding item
+interface FundingItem {
+  id: string; // This is funding_ref
+  funding_ref: string;
+  merchant_id: string; // Serialized BigInt
+  created_by: string | null; // Serialized BigInt or null
+  approved_by: string | null; // Serialized BigInt or null
+  amount: string; // Serialized Decimal
+  balance_before: string; // Serialized Decimal
+  balance_after: string; // Serialized Decimal
+  description: string;
+  source: string;
+  is_approved: boolean;
+  is_credited: boolean;
+  is_active: boolean;
+  created_at: string | Date;
+  approved_at: string | Date | null;
+  vas_users_vas_merchant_funding_created_byTovas_users: SimpleUser | null;
+  vas_users_vas_merchant_funding_approved_byTovas_users: SimpleUser | null;
+  // Add other properties if they are part of the serialized funding
+}
 
 const fetchFundingRequests = async (
   page: number,
@@ -58,63 +87,48 @@ export const MerchantFundingList = () => {
   const [selectedFundingId, setSelectedFundingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Set today as default for dates
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-  
-  const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState("all");
-  const [startDate, setStartDate] = useState<Date | undefined>(today);
-  const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
-  const [page, setPage] = useState(1);
+  // Set today as default for dates - moved inside useState initializer
+  const todayInitializer = () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+  const todayEndInitializer = () => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
+  const [amount, setAmount] = useState(() => new URLSearchParams(window.location.search).get("amount") || "");
+  const [status, setStatus] = useState(() => new URLSearchParams(window.location.search).get("status") || "all");
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const urlStartDate = new URLSearchParams(window.location.search).get("startDate");
+    return urlStartDate ? new Date(urlStartDate) : todayInitializer();
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => {
+    const urlEndDate = new URLSearchParams(window.location.search).get("endDate");
+    if (urlEndDate) {
+      const end = new Date(urlEndDate);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+    return todayEndInitializer();
+  });
+  const [page, setPage] = useState(() => Number(new URLSearchParams(window.location.search).get("page")) || 1);
   
   // Active filter values (applied when button is clicked)
-  const [activeAmount, setActiveAmount] = useState("");
-  const [activeStatus, setActiveStatus] = useState("all");
-  const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
-  const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
+  const [activeAmount, setActiveAmount] = useState(amount);
+  const [activeStatus, setActiveStatus] = useState(status);
+  const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(startDate);
+  const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(endDate);
 
   const handleRowClick = (fundingRef: string) => {
     setSelectedFundingId(fundingRef);
     setIsModalOpen(true);
   };
 
-  // Initialize from URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const initialAmount = params.get("amount") || "";
-    setAmount(initialAmount);
-    setActiveAmount(initialAmount);
-    
-    const initialStatus = params.get("status") || "all";
-    setStatus(initialStatus);
-    setActiveStatus(initialStatus);
-    
-    // Initialize dates from URL or use today as default
-    const urlStartDate = params.get("startDate");
-    const urlEndDate = params.get("endDate");
-    if (urlStartDate) {
-      const start = new Date(urlStartDate);
-      setStartDate(start);
-      setActiveStartDate(start);
-    } else {
-      setStartDate(today);
-      setActiveStartDate(today);
-    }
-    if (urlEndDate) {
-      const end = new Date(urlEndDate);
-      end.setHours(23, 59, 59, 999);
-      setEndDate(end);
-      setActiveEndDate(end);
-    } else {
-      setEndDate(todayEnd);
-      setActiveEndDate(todayEnd);
-    }
-    
-    setPage(Number(params.get("page")) || 1);
-  }, []);
+  // Removed useEffect for initializing from URL params
+  // useEffect(() => { ... }, []);
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: [
@@ -149,7 +163,7 @@ export const MerchantFundingList = () => {
     return format(new Date(date), "MMM dd, yyyy HH:mm");
   };
 
-  const getStatusBadge = (funding: any) => {
+  const getStatusBadge = (funding: FundingItem) => {
     if (!funding.is_active) {
       return <Badge variant="destructive">Rejected</Badge>;
     }
@@ -319,7 +333,8 @@ export const MerchantFundingList = () => {
           <CardTitle>Funding History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <div className="w-full overflow-x-auto">
               <Table className="min-w-[720px] text-xs sm:text-sm">
                 <TableHeader>
@@ -358,7 +373,7 @@ export const MerchantFundingList = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    fundings.map((funding: any) => (
+                    fundings.map((funding: FundingItem) => (
                         <TableRow 
                           key={funding.id} 
                           className="hover:bg-muted/50 cursor-pointer"

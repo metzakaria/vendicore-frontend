@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client"; // Import Prisma client types
 
 interface GetDataPackagesParams {
   page?: number;
@@ -19,7 +20,7 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
     const status = params.status || "all";
     const productId = params.product_id;
 
-    const where: any = {};
+    const where: Prisma.vas_data_packagesWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -36,6 +37,18 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
     if (productId && productId !== "all") {
       where.product_id = BigInt(productId);
     }
+
+    type DataPackageWithProduct = Prisma.vas_data_packagesGetPayload<{
+      include: {
+        vas_products: {
+          select: {
+            id: true;
+            product_name: true;
+            product_code: true;
+          };
+        };
+      };
+    }>;
 
     const [packages, total] = await Promise.all([
       prisma.vas_data_packages.findMany({
@@ -59,7 +72,7 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
     ]);
 
     // Serialize BigInt values to strings for JSON
-    const serializedPackages = packages.map((pkg: any) => ({
+    const serializedPackages = packages.map((pkg: DataPackageWithProduct) => ({
       ...pkg,
       id: pkg.id.toString(),
       product_id: pkg.product_id.toString(),
@@ -93,18 +106,28 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
 
 interface GetDataPackagesProvidersParams {
   network?: string;
-  providerId?: string;
 }
 export const getDataPackagesWithProviderCode = async (params: GetDataPackagesProvidersParams = {}) => {
   try {
     
     const network = params.network || "none";
-    const providerId = params.providerId || "";
   console.log("========================"+network);
-    const where: any = {};
+    const where: Prisma.vas_data_packagesWhereInput = {};
 
       where.network = network;
  
+
+    type DataPackageWithProduct = Prisma.vas_data_packagesGetPayload<{
+      include: {
+        vas_products: {
+          select: {
+            id: true;
+            product_name: true;
+            product_code: true;
+          };
+        };
+      };
+    }>;
 
     const [packages, total] = await Promise.all([
       prisma.vas_data_packages.findMany({
@@ -126,7 +149,7 @@ export const getDataPackagesWithProviderCode = async (params: GetDataPackagesPro
     ]);
 
     // Serialize BigInt values to strings for JSON
-    const serializedPackages = packages.map((pkg: any) => ({
+    const serializedPackages = packages.map((pkg: DataPackageWithProduct) => ({
       ...pkg,
       id: pkg.id.toString(),
       product_id: pkg.product_id.toString(),

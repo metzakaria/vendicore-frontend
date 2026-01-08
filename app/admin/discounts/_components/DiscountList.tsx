@@ -35,6 +35,7 @@ import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
 import { getProductsForMerchant } from "../_actions/getProductsForMerchant";
 import { getDiscountsByMerchant } from "../_actions/getDiscountsByMerchant";
 import { bulkUpdateDiscounts } from "../_actions/bulkUpdateDiscounts";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Discount {
   id: string;
@@ -81,6 +82,36 @@ interface ProductDiscount {
   hasDiscount: boolean;
 }
 
+// Define the shape of a serialized product for merchant
+interface ProductForMerchant {
+  id: string; // Serialized BigInt
+  product_name: string;
+  product_code: string;
+  vas_product_categories: {
+    id: string; // Serialized BigInt
+    name: string;
+    category_code: string;
+  };
+}
+
+// Define the type for the value of the discountMap (reused from getDiscountsByMerchant.ts)
+interface DiscountMapValue {
+  id: string;
+  discount_type: string;
+  discount_value: string;
+  is_active: boolean;
+}
+
+// Define the type for the updates array
+type DiscountUpdateItem = {
+  product_id: string;
+  action: "create" | "update" | "delete";
+  discount_id?: string;
+  discount_type?: "percentage" | "flat";
+  discount_value?: string;
+  is_active?: boolean;
+}
+
 const fetchDiscounts = async (
   page: number,
   status: string,
@@ -106,10 +137,10 @@ const fetchDiscounts = async (
 
 export const DiscountList = () => {
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState("all");
-  const [merchantId, setMerchantId] = useState("all");
-  const [productId, setProductId] = useState("all");
-  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState(() => new URLSearchParams(window.location.search).get("status") || "all");
+  const [merchantId, setMerchantId] = useState(() => new URLSearchParams(window.location.search).get("merchant_id") || "all");
+  const [productId, setProductId] = useState(() => new URLSearchParams(window.location.search).get("product_id") || "all");
+  const [page, setPage] = useState(() => Number(new URLSearchParams(window.location.search).get("page")) || 1);
   
   // Manage modal state
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -133,13 +164,7 @@ export const DiscountList = () => {
     staleTime: 300000, // 5 minutes
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setStatus(params.get("status") || "all");
-    setMerchantId(params.get("merchant_id") || "all");
-    setProductId(params.get("product_id") || "all");
-    setPage(Number(params.get("page")) || 1);
-  }, []);
+  // Removed useEffect for initializing from URL params
 
   // Update URL when filters change (without page reload)
   useEffect(() => {
@@ -420,7 +445,8 @@ export const DiscountList = () => {
       )}
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="relative rounded-md border">
+        <TableOverlayLoader isVisible={isLoading || isFetching} />
         <Table>
           <TableHeader>
             <TableRow>
@@ -570,90 +596,94 @@ export const DiscountList = () => {
             </div>
 
             {selectedMerchantId && (
-              <>
-                {isLoadingModalProducts || isLoadingModalDiscounts ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : productDiscounts.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    No products available.
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[250px]">Product</TableHead>
-                          <TableHead className="w-[150px]">Discount Type</TableHead>
-                          <TableHead className="w-[150px]">Value</TableHead>
-                          <TableHead className="w-[100px]">Active</TableHead>
+              <div className="relative rounded-md border">
+                <TableOverlayLoader isVisible={isLoadingModalProducts || isLoadingModalDiscounts} />
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[250px]">Product</TableHead>
+                      <TableHead className="w-[150px]">Discount Type</TableHead>
+                      <TableHead className="w-[150px]">Value</TableHead>
+                      <TableHead className="w-[100px]">Active</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingModalProducts || isLoadingModalDiscounts ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[50px]" /></TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productDiscounts.map((item) => (
-                          <TableRow key={item.product_id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium text-sm">{item.product_name}</div>
-                                <div className="text-xs text-muted-foreground">{item.product_code}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={item.discount_type || "_none"}
-                                onValueChange={(value) =>
-                                  handleDiscountChange(item.product_id, "discount_type", value)
-                                }
-                              >
-                                <SelectTrigger className="w-[130px] h-8">
-                                  <SelectValue placeholder="Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="_none">None</SelectItem>
-                                  <SelectItem value="percentage">Percentage</SelectItem>
-                                  <SelectItem value="flat">Flat</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <div className="relative flex items-center">
-                                {item.discount_type && (
-                                  <span className="absolute left-2 text-muted-foreground text-sm pointer-events-none">
-                                    {item.discount_type === "percentage" ? "%" : "₦"}
-                                  </span>
-                                )}
-                                <Input
-                                  type="number"
-                                  value={item.discount_value}
-                                  onChange={(e) =>
-                                    handleDiscountChange(item.product_id, "discount_value", e.target.value)
-                                  }
-                                  disabled={!item.discount_type}
-                                  className={`w-[100px] h-8 ${item.discount_type ? "pl-6" : ""}`}
-                                  min="0"
-                                  max={item.discount_type === "percentage" ? "100" : undefined}
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Checkbox
-                                checked={item.is_active}
-                                onCheckedChange={(checked) =>
-                                  handleDiscountChange(item.product_id, "is_active", !!checked)
+                      ))
+                    ) : productDiscounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          No products available for this merchant.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      productDiscounts.map((item) => (
+                        <TableRow key={item.product_id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium text-sm">{item.product_name}</div>
+                              <div className="text-xs text-muted-foreground">{item.product_code}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={item.discount_type || "_none"}
+                              onValueChange={(value) =>
+                                handleDiscountChange(item.product_id, "discount_type", value)
+                              }
+                            >
+                              <SelectTrigger className="w-[130px] h-8">
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="_none">None</SelectItem>
+                                <SelectItem value="percentage">Percentage</SelectItem>
+                                <SelectItem value="flat">Flat</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative flex items-center">
+                              {item.discount_type && (
+                                <span className="absolute left-2 text-muted-foreground text-sm pointer-events-none">
+                                  {item.discount_type === "percentage" ? "%" : "₦"}
+                                </span>
+                              )}
+                              <Input
+                                type="number"
+                                value={item.discount_value}
+                                onChange={(e) =>
+                                  handleDiscountChange(item.product_id, "discount_value", e.target.value)
                                 }
                                 disabled={!item.discount_type}
+                                className={`w-[100px] h-8 ${item.discount_type ? "pl-6" : ""}`}
+                                min="0"
+                                max={item.discount_type === "percentage" ? "100" : undefined}
                               />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={item.is_active}
+                              onCheckedChange={(checked) =>
+                                handleDiscountChange(item.product_id, "is_active", !!checked)
+                              }
+                              disabled={!item.discount_type}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
 
             {saveError && (

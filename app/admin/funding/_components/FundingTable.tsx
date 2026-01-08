@@ -49,6 +49,7 @@ import { createFunding } from "../_actions/createFunding";
 import { approveFunding } from "../_actions/approveFunding";
 import { updateFundingAmount } from "../_actions/updateFundingAmount";
 import { getFundingRequestById } from "../_actions/getFundingRequestById";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface FundingRequest {
   id?: string;
@@ -265,7 +266,8 @@ export const FundingTable = ({
       )}
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="relative rounded-md border">
+        <TableOverlayLoader isVisible={isLoading} />
         <Table>
           <TableHeader>
             <TableRow>

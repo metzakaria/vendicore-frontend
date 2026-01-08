@@ -11,6 +11,34 @@ import { TransactionTable } from "./TransactionTable";
 import { exportToCsv } from "@/lib/utils/exportToCsv";
 import { format } from "date-fns";
 
+// Define the interface for a single transaction item based on the serialized output for export
+interface ExportTransactionItem {
+  id: string;
+  merchant_id: string;
+  product_id: string;
+  provider_account_id: string | null;
+  amount: string;
+  discount_amount: string;
+  balance_before: string;
+  balance_after: string;
+  merchant_ref: string;
+  provider_ref: string | null;
+  beneficiary_account: string;
+  status: string;
+  is_reverse: boolean;
+  reversed_at: string | Date | null;
+  created_at: string | Date;
+  updated_at: string | Date | null;
+  vas_products: {
+    product_name: string;
+    product_code: string;
+  } | null;
+  vas_provider_accounts: {
+    account_name: string;
+  } | null;
+  // Add other properties from vas_transactions model if they are used in the export
+}
+
 const fetchTransactions = async (
   page: number,
   referenceNo: string,
@@ -54,31 +82,48 @@ const fetchTransactions = async (
 };
 
 export const MerchantTransactionList = () => {
-  // Set today as default for dates
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  // Set today as default for dates - moved inside useState initializer
+  const todayInitializer = () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+  const todayEndInitializer = () => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
   
-  const [referenceNo, setReferenceNo] = useState("");
-  const [beneficiary, setBeneficiary] = useState("");
-  const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState("all");
-  const [startDate, setStartDate] = useState<Date | undefined>(today);
-  const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
-  const [productId, setProductId] = useState("all");
-  const [categoryId, setCategoryId] = useState("all");
-  const [page, setPage] = useState(1);
+  const [referenceNo, setReferenceNo] = useState(() => new URLSearchParams(window.location.search).get("referenceNo") || "");
+  const [beneficiary, setBeneficiary] = useState(() => new URLSearchParams(window.location.search).get("beneficiary") || "");
+  const [amount, setAmount] = useState(() => new URLSearchParams(window.location.search).get("amount") || "");
+  const [status, setStatus] = useState(() => new URLSearchParams(window.location.search).get("status") || "all");
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const urlStartDate = new URLSearchParams(window.location.search).get("startDate");
+    return urlStartDate ? new Date(urlStartDate) : todayInitializer();
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => {
+    const urlEndDate = new URLSearchParams(window.location.search).get("endDate");
+    if (urlEndDate) {
+      const end = new Date(urlEndDate);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+    return todayEndInitializer();
+  });
+  const [productId, setProductId] = useState(() => new URLSearchParams(window.location.search).get("product") || "all");
+  const [categoryId, setCategoryId] = useState(() => new URLSearchParams(window.location.search).get("category") || "all");
+  const [page, setPage] = useState(() => Number(new URLSearchParams(window.location.search).get("page")) || 1);
   
   // Active filter values (applied when button is clicked)
-  const [activeReferenceNo, setActiveReferenceNo] = useState("");
-  const [activeBeneficiary, setActiveBeneficiary] = useState("");
-  const [activeAmount, setActiveAmount] = useState("");
-  const [activeStatus, setActiveStatus] = useState("all");
-  const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
-  const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
-  const [activeProductId, setActiveProductId] = useState("all");
-  const [activeCategoryId, setActiveCategoryId] = useState("all");
+  const [activeReferenceNo, setActiveReferenceNo] = useState(referenceNo);
+  const [activeBeneficiary, setActiveBeneficiary] = useState(beneficiary);
+  const [activeAmount, setActiveAmount] = useState(amount);
+  const [activeStatus, setActiveStatus] = useState(status);
+  const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(startDate);
+  const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(endDate);
+  const [activeProductId, setActiveProductId] = useState(productId);
+  const [activeCategoryId, setActiveCategoryId] = useState(categoryId);
   const [isExporting, setIsExporting] = useState(false);
 
   // Fetch products and categories for dropdown
@@ -94,56 +139,8 @@ export const MerchantTransactionList = () => {
     staleTime: 300000,
   });
 
-  // Initialize from URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const initialReferenceNo = params.get("referenceNo") || "";
-    setReferenceNo(initialReferenceNo);
-    setActiveReferenceNo(initialReferenceNo);
-    
-    const initialBeneficiary = params.get("beneficiary") || "";
-    setBeneficiary(initialBeneficiary);
-    setActiveBeneficiary(initialBeneficiary);
-    
-    const initialAmount = params.get("amount") || "";
-    setAmount(initialAmount);
-    setActiveAmount(initialAmount);
-    
-    const initialStatus = params.get("status") || "all";
-    setStatus(initialStatus);
-    setActiveStatus(initialStatus);
-    
-    const initialProductId = params.get("product") || "all";
-    setProductId(initialProductId);
-    setActiveProductId(initialProductId);
-    
-    const initialCategoryId = params.get("category") || "all";
-    setCategoryId(initialCategoryId);
-    setActiveCategoryId(initialCategoryId);
-    
-    // Initialize dates from URL or use today as default
-    const urlStartDate = params.get("startDate");
-    const urlEndDate = params.get("endDate");
-    if (urlStartDate) {
-      const start = new Date(urlStartDate);
-      setStartDate(start);
-      setActiveStartDate(start);
-    } else {
-      setStartDate(today);
-      setActiveStartDate(today);
-    }
-    if (urlEndDate) {
-      const end = new Date(urlEndDate);
-      end.setHours(23, 59, 59, 999);
-      setEndDate(end);
-      setActiveEndDate(end);
-    } else {
-      setEndDate(todayEnd);
-      setActiveEndDate(todayEnd);
-    }
-    
-    setPage(Number(params.get("page")) || 1);
-  }, []);
+  // Removed problematic useEffect for initializing from URL params
+  // useEffect(() => { ... }, []);
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: [
@@ -212,7 +209,7 @@ export const MerchantTransactionList = () => {
       }
 
       // Transform data for CSV export
-      const csvData = exportResult.transactions.map((tx: any) => ({
+      const csvData = exportResult.transactions.map((tx: ExportTransactionItem) => ({
         Date: formatDateTime(tx.created_at),
         "Product Name": tx.vas_products?.product_name || "N/A",
         "Product Code": tx.vas_products?.product_code || "N/A",

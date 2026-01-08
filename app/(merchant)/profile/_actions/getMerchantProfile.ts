@@ -15,7 +15,6 @@ export const getMerchantProfile = async () => {
     }
 
     const merchantId = BigInt(session.user.merchantId);
-    const userId = BigInt(session.user.id);
 
     // Get merchant with user details
     const merchant = await prisma.vas_merchants.findUnique({

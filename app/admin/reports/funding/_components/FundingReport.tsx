@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import { getFundingReport } from "../../_actions/getFundingReport";
 import { getMerchantsForDropdown } from "@/app/admin/funding/_actions/getMerchantsForDropdown";
 import { exportToCsv } from "@/lib/utils/exportToCsv";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 export const FundingReport = () => {
   const router = useRouter();
@@ -273,7 +274,8 @@ export const FundingReport = () => {
           <CardTitle>Funding Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <Table>
               <TableHeader>
                 <TableRow>

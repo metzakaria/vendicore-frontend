@@ -9,8 +9,47 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { TransactionStatusBadge } from "../../../_components/TransactionStatusBadge";
 
+// Define the shape of the serialized transaction object
+interface TransactionDetails {
+  id: string; // Serialized BigInt
+  merchant_ref: string;
+  provider_ref: string | null;
+  beneficiary_account: string;
+  amount: string; // Serialized Decimal
+  discount_amount: string; // Serialized Decimal
+  balance_before: string; // Serialized Decimal
+  balance_after: string; // Serialized Decimal
+  description: string;
+  status: string;
+  is_reverse: boolean;
+  reversed_at: string | Date | null;
+  created_at: string | Date;
+  updated_at: string | Date | null;
+  merchant_id: string; // Serialized BigInt
+  product_id: string; // Serialized BigInt
+  product_category_id: string; // Serialized BigInt
+  provider_account_id: string | null; // Serialized BigInt or null
+
+  vas_merchants: {
+    merchant_code: string;
+    business_name: string;
+  } | null;
+  vas_products: {
+    product_name: string;
+    product_code: string;
+    description: string;
+  } | null;
+  vas_provider_accounts: {
+    account_name: string;
+  } | null;
+  vas_product_categories: {
+    name: string;
+  } | null;
+  // Add other properties from vas_transactions model if used in the component
+}
+
 interface MerchantTransactionDetailsProps {
-  transaction: any;
+  transaction: TransactionDetails;
 }
 
 export const MerchantTransactionDetails = ({ transaction }: MerchantTransactionDetailsProps) => {

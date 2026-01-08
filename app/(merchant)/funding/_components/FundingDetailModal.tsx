@@ -11,9 +11,45 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, CreditCard, Building2, User, CheckCircle2, XCircle, Clock, X } from "lucide-react";
+import { Calendar, CreditCard, Building2, CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { format } from "date-fns";
 import { getMerchantFundingById } from "../_actions/getMerchantFundingById";
+
+// Define a type for the included user details
+type UserDetails = {
+  id: string;
+  username: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+};
+
+// Define the shape of the serialized funding object
+interface FundingDetails {
+  funding_ref: string;
+  amount: string;
+  balance_before: string;
+  balance_after: string;
+  description: string;
+  source: string;
+  is_approved: boolean;
+  is_credited: boolean;
+  is_active: boolean;
+  created_at: string | Date;
+  approved_at: string | Date | null;
+  merchant_id: string;
+  created_by: string;
+  approved_by: string | null;
+
+  vas_merchants: {
+    id: string;
+    merchant_code: string;
+    business_name: string;
+    current_balance: string;
+  } | null; // vas_merchants can be null based on getMerchantFundingById
+  vas_users_vas_merchant_funding_created_byTovas_users: UserDetails | null;
+  vas_users_vas_merchant_funding_approved_byTovas_users: UserDetails | null;
+}
 
 interface FundingDetailModalProps {
   fundingId: string | null;
@@ -26,7 +62,7 @@ export const FundingDetailModal = ({
   open,
   onOpenChange,
 }: FundingDetailModalProps) => {
-  const { data: funding, isLoading, error } = useQuery({
+  const { data: funding, isLoading, error } = useQuery<FundingDetails | null, Error>({ // Specify type parameters for useQuery
     queryKey: ["merchant-funding", fundingId],
     queryFn: () => getMerchantFundingById(fundingId!),
     enabled: !!fundingId && open,
@@ -223,4 +259,3 @@ export const FundingDetailModal = ({
     </Dialog>
   );
 };
-

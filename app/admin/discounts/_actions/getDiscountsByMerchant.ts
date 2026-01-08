@@ -22,8 +22,16 @@ export const getDiscountsByMerchant = async (merchantId: string) => {
       },
     });
 
+    // Define the type for the value of the discountMap
+    interface DiscountMapValue {
+      id: string;
+      discount_type: string;
+      discount_value: string;
+      is_active: boolean;
+    }
+
     // Create an object map of product_id -> discount for JSON serialization
-    const discountMap: Record<string, any> = {};
+    const discountMap: Record<string, DiscountMapValue> = {};
     discounts.forEach((discount) => {
       discountMap[discount.product_id.toString()] = {
         id: discount.id.toString(),

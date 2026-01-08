@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Coins, Activity, TrendingUp, CreditCard, Wallet, Filter, Loader2 } from "lucide-react";
+import { Coins, Activity, TrendingUp, Wallet, Filter, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -119,7 +119,7 @@ export const MerchantDashboard = () => {
             {stats?.merchant?.business_name || "Merchant"} Dashboard
           </h2>
           <p className="text-muted-foreground">
-            Welcome back! Here's an overview of your account.
+            Welcome back! Here&apos;s an overview of your account.
           </p>
         </div>
         <div className="flex items-center gap-1.5 rounded-md border border-primary/20 bg-white px-2 py-1">

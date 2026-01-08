@@ -122,8 +122,8 @@ export const ImportDataPackagesForm = () => {
       const text = await file.text();
       const parsed = parseCSV(text);
       setParsedData(parsed);
-    } catch (err: any) {
-      setError(err.message || "Failed to parse CSV file");
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || "Failed to parse CSV file");
       setParsedData([]);
     } finally {
       setIsProcessing(false);
@@ -162,8 +162,8 @@ export const ImportDataPackagesForm = () => {
       } else {
         setError(result.error || "Failed to import data packages");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to import data packages");
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || "Failed to import data packages");
     } finally {
       setIsProcessing(false);
     }

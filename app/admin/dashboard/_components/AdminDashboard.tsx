@@ -18,7 +18,6 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
-  DollarSign,
   Server,
   Coins,
 } from "lucide-react";

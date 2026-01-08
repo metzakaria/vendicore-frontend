@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getRevenueReport } from "../../_actions/getRevenueReport";
 import { exportToCsv } from "@/lib/utils/exportToCsv";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 export const ProductReport = () => {
   const router = useRouter();
@@ -168,7 +169,8 @@ export const ProductReport = () => {
           <CardTitle>Product Performance</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="relative rounded-md border">
+            <TableOverlayLoader isVisible={isLoading} />
             <Table>
               <TableHeader>
                 <TableRow>

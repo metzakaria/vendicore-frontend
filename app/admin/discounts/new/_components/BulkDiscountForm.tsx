@@ -29,6 +29,7 @@ import { getMerchantsForDropdown } from "../../_actions/getMerchantsForDropdown"
 import { getProductsForMerchant } from "../../_actions/getProductsForMerchant";
 import { getDiscountsByMerchant } from "../../_actions/getDiscountsByMerchant";
 import { bulkUpdateDiscounts } from "../../_actions/bulkUpdateDiscounts";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface ProductDiscount {
   product_id: string;
@@ -353,42 +354,46 @@ export const BulkDiscountForm = () => {
                 </Button>
               </div>
 
-              {productsLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Loading products...
-                </div>
-              ) : productsError ? (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    Error loading products: {productsError instanceof Error ? productsError.message : "Unknown error"}
-                  </AlertDescription>
-                </Alert>
-              ) : !products || products.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No products available
-                </div>
-              ) : productDiscounts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Preparing products table...
-                </div>
-              ) : (
-                <div className="rounded-md border">
-                  <div className="max-h-[600px] overflow-auto">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-background z-10">
+              <div className="relative rounded-md border">
+                <TableOverlayLoader isVisible={productsLoading} />
+                <div className="max-h-[600px] overflow-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background z-10">
+                      <TableRow>
+                        <TableHead className="min-w-[200px]">Product</TableHead>
+                        <TableHead className="min-w-[120px]">Category</TableHead>
+                        <TableHead className="min-w-[150px]">Discount Type</TableHead>
+                        <TableHead className="min-w-[150px]">Discount Value</TableHead>
+                        <TableHead className="min-w-[100px]">Active</TableHead>
+                        <TableHead className="min-w-[100px]">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {productsLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-[130px]" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-[130px]" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : productsError ? (
                         <TableRow>
-                          <TableHead className="min-w-[200px]">Product</TableHead>
-                          <TableHead className="min-w-[120px]">Category</TableHead>
-                          <TableHead className="min-w-[150px]">Discount Type</TableHead>
-                          <TableHead className="min-w-[150px]">Discount Value</TableHead>
-                          <TableHead className="min-w-[100px]">Active</TableHead>
-                          <TableHead className="min-w-[100px]">Status</TableHead>
+                          <TableCell colSpan={6} className="text-center py-8 text-destructive">
+                            Error loading products: {productsError instanceof Error ? productsError.message : "Unknown error"}
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productDiscounts.map((item) => (
+                      ) : !products || products.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No products available for this merchant.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        productDiscounts.map((item) => (
                           <TableRow
                             key={item.product_id}
                             className={item.hasDiscount ? "bg-muted/30" : ""}
@@ -480,12 +485,12 @@ export const BulkDiscountForm = () => {
                               )}
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </CardContent>
