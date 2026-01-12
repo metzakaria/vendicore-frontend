@@ -301,6 +301,7 @@ export const TransactionList = () => {
     // Prepare data for CSV export
     const exportData = transactions.map((tx) => ({
       "Transaction ID": tx.id,
+      "Provider": tx.vas_provider_accounts?.account_name || "N/A",
       "Merchant": tx.vas_merchants?.business_name || "N/A",
       "Merchant Code": tx.vas_merchants?.merchant_code || "N/A",
       "Product": tx.vas_products?.product_name || "N/A",

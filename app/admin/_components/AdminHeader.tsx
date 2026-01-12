@@ -62,7 +62,7 @@ export const AdminHeader = () => {
 
         {/* Title */}
         <h2 className="text-sm font-medium text-muted-foreground truncate">
-          {session?.user?.role === "superadmin" ? "Superadmin" : "Admin"} Dashboard
+          {session?.user?.role === "superadmin" ? "Admin" : "Admin"} Dashboard
         </h2>
       </div>
 
@@ -81,13 +81,14 @@ export const AdminHeader = () => {
       {/* Right section */}
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Desktop search */}
+        {/*
         <div className="hidden sm:flex relative w-48 lg:w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search..."
             className="pl-9"
           />
-        </div>
+        </div>*/}
 
         {/* Notifications - Desktop only */}
         <Button

@@ -8,6 +8,7 @@ interface GetFundingRequestsParams {
   search?: string;
   status?: "all" | "pending" | "approved" | "rejected";
   merchant_id?: string;
+  hide_auto_reverse?: boolean;
   is_approved?: boolean;
   is_credited?: boolean;
 }
@@ -20,6 +21,7 @@ export const getFundingRequests = async (params: GetFundingRequestsParams = {}) 
     const search = params.search || "";
     const status = params.status || "all";
     const merchantId = params.merchant_id;
+    const hide_auto_reverse = params.hide_auto_reverse;
     const isApproved = params.is_approved;
     const isCredited = params.is_credited;
 
@@ -53,6 +55,10 @@ export const getFundingRequests = async (params: GetFundingRequestsParams = {}) 
       } else if (status === "approved") {
         where.is_approved = true;
       }
+    }
+
+    if (hide_auto_reverse==true) {
+      where.source = {not: 'auto_reversal'}
     }
 
     if (isApproved !== undefined) {

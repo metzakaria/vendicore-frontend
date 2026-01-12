@@ -308,7 +308,12 @@ export const FundingTable = ({
                     {formatCurrency(funding.amount)}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate" title={funding.description}>
-                    {funding.description}
+                    <div className="font-medium text-sm">
+                        {funding.description}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {funding.source}
+                      </div>
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(funding.is_approved, funding.is_credited, funding.is_active)}

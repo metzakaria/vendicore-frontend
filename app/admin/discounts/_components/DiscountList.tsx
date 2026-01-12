@@ -554,9 +554,9 @@ export const DiscountList = () => {
           <div className="flex-1 overflow-y-auto space-y-4 py-4">
             {/* Merchant Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Merchant</label>
+              <label className="text-sm font-medium">Please Select Merchant To Manger Their Discount</label>
               <Select value={selectedMerchantId} onValueChange={handleSelectMerchantForModal}>
-                <SelectTrigger className="w-full sm:w-[300px]">
+                <SelectTrigger className="w-full sm:w-[300px] border-2 text-md">
                   <SelectValue placeholder="Select a merchant" />
                 </SelectTrigger>
                 <SelectContent>
@@ -574,7 +574,7 @@ export const DiscountList = () => {
                 {isLoadingModalProducts || isLoadingModalDiscounts ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
+                      <Skeleton key={i} className="h-12 w-full border-2" />
                     ))}
                   </div>
                 ) : productDiscounts.length === 0 ? (

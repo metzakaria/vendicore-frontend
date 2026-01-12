@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
 import {
   Select,
   SelectContent,
@@ -59,7 +62,8 @@ const fetchFundingRequests = async (
   page: number,
   search: string,
   status: string,
-  merchantId: string
+  merchantId: string,
+  hideAutoReverse: boolean
 ): Promise<FundingRequestsResponse> => {
   const result = await getFundingRequests({
     page,
@@ -67,6 +71,7 @@ const fetchFundingRequests = async (
     search,
     status: status as "all" | "pending" | "approved" | "rejected",
     merchant_id: merchantId && merchantId !== "all" ? merchantId : undefined,
+    hide_auto_reverse: hideAutoReverse
   });
 
   return {
@@ -85,6 +90,7 @@ export const FundingList = () => {
   const [status, setStatus] = useState("all");
   const [merchantId, setMerchantId] = useState("all");
   const [page, setPage] = useState(1);
+  const [hideAutoReverse, setHideAutoReverse] = useState(true)
 
   // Fetch merchants for dropdown
   const { data: merchants } = useQuery({
@@ -100,6 +106,7 @@ export const FundingList = () => {
     setDebouncedSearch(initialSearch);
     setStatus(params.get("status") || "all");
     setMerchantId(params.get("merchant_id") || "all");
+    setHideAutoReverse(  true );
     setPage(Number(params.get("page")) || 1);
   }, []);
 
@@ -123,17 +130,18 @@ export const FundingList = () => {
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (status !== "all") params.set("status", status);
     if (merchantId !== "all") params.set("merchant_id", merchantId);
+    //if (hideAutoReverse !== true) params.set("hideAutoReverse", hideAutoReverse.toString());
     if (page > 1) params.set("page", page.toString());
 
     const newUrl = `/admin/funding${params.toString() ? `?${params.toString()}` : ""}`;
     if (window.location.pathname + window.location.search !== newUrl) {
       window.history.replaceState({}, "", newUrl);
     }
-  }, [debouncedSearch, status, merchantId, page]);
+  }, [debouncedSearch, status, merchantId, hideAutoReverse, page]);
 
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ["funding-requests", page, debouncedSearch, status, merchantId],
-    queryFn: () => fetchFundingRequests(page, debouncedSearch, status, merchantId),
+    queryKey: ["funding-requests", page, debouncedSearch, status, merchantId, hideAutoReverse],
+    queryFn: () => fetchFundingRequests(page, debouncedSearch, status, merchantId, hideAutoReverse),
     retry: 1,
     keepPreviousData: true,
     staleTime: 30000,
@@ -150,6 +158,11 @@ export const FundingList = () => {
 
   const handleMerchantChange = (value: string) => {
     setMerchantId(value);
+    setPage(1);
+  };
+
+  const handleHideAutoReversChange = (value: boolean) => {
+    setHideAutoReverse(value);
     setPage(1);
   };
 
@@ -212,6 +225,15 @@ export const FundingList = () => {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="source"
+            checked={hideAutoReverse}
+            onCheckedChange={(checked) => handleHideAutoReversChange(!!checked)} 
+            //className="data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 data-[state=checked]:text-white dark:data-[state=checked]:border-indigo-700 dark:data-[state=checked]:bg-indigo-700"
+          />
+          <Label htmlFor="source">Hide Reversal</Label>
+        </div>
       </div>
 
       {/* Progress bar for background fetching */}
