@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Pencil, Eye, Plus, Search } from "lucide-react";
+import { CheckCircle2, Pencil, Eye, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -115,10 +115,14 @@ export const FundingTable = ({
     autoApprove: false,
   });
   
-  // Edit modal state
+  // Edit modal state - Enhanced to include all fields
   const [editingFunding, setEditingFunding] = useState<FundingRequest | null>(null);
-  const [editAmount, setEditAmount] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    amount: "",
+    description: "",
+    source: "",
+  });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // View modal state
   const [viewingFunding, setViewingFunding] = useState<any | null>(null);
@@ -205,24 +209,46 @@ export const FundingTable = ({
     }
   };
 
-  const handleEditAmount = (funding: FundingRequest) => {
+  const handleEditFunding = (funding: FundingRequest) => {
     setEditingFunding(funding);
-    setEditAmount(funding.amount);
-    setIsEditing(true);
+    setEditFormData({
+      amount: funding.amount,
+      description: funding.description,
+      source: funding.source,
+    });
+    setIsEditModalOpen(true);
+    setModalError(null);
   };
 
   const handleSaveEdit = async () => {
     if (!editingFunding) return;
 
+    // Validate amount
+    const amount = parseFloat(editFormData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setModalError("Please enter a valid amount greater than 0");
+      return;
+    }
+
+    // Validate description
+    if (!editFormData.description.trim()) {
+      setModalError("Please enter a description");
+      return;
+    }
+
     setIsSubmitting(true);
+    setModalError(null);
+
     try {
-      const result = await updateFundingAmount(editingFunding.funding_ref, parseFloat(editAmount));
+      // You'll need to create this action to update all fields
+      const result = await updateFundingAmount(editingFunding.funding_ref, amount);
+      
       if (result.success) {
-        setIsEditing(false);
+        setIsEditModalOpen(false);
         setEditingFunding(null);
         queryClient.invalidateQueries({ queryKey });
       } else {
-        setModalError(result.error || "Failed to update amount");
+        setModalError(result.error || "Failed to update funding");
       }
     } catch (err: any) {
       setModalError(err.message || "An error occurred");
@@ -333,6 +359,7 @@ export const FundingTable = ({
                   )}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {/* View Button - Always available */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -348,20 +375,21 @@ export const FundingTable = ({
                         <TooltipContent>View Details</TooltipContent>
                       </Tooltip>
 
-                      {!funding.is_approved && (
+                      {/* Edit and Approve - Only for pending requests */}
+                      {!funding.is_approved && funding.is_active && (
                         <>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditAmount(funding)}
+                                onClick={() => handleEditFunding(funding)}
                                 className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Edit funding amount</TooltipContent>
+                            <TooltipContent>Edit funding details</TooltipContent>
                           </Tooltip>
 
                           <AlertDialog>
@@ -405,6 +433,7 @@ export const FundingTable = ({
                         </>
                       )}
 
+                      {/* Disabled buttons for approved requests */}
                       {funding.is_approved && (
                         <div className="flex items-center gap-1 opacity-50">
                           <Tooltip>
@@ -425,7 +454,7 @@ export const FundingTable = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 cursor-not-allowed"
+                                className="h-8 w-8 p-0 cursor-not-allowed text-green-600"
                                 disabled
                               >
                                 <CheckCircle2 className="h-4 w-4" />
@@ -496,81 +525,129 @@ export const FundingTable = ({
                 checked={formData.autoApprove}
                 onCheckedChange={(checked) => setFormData({ ...formData, autoApprove: !!checked })}
               />
-              <Label htmlFor="autoApprove">Auto-approve this funding</Label>
+              <Label htmlFor="autoApprove" className="text-sm font-normal cursor-pointer">
+                Auto-approve this funding
+              </Label>
             </div>
 
             {modalError && (
-              <div className="text-sm text-destructive">{modalError}</div>
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {modalError}
+              </div>
             )}
 
             <div className="flex justify-end gap-2 pt-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddModalOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel and close modal</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleAddFunding} disabled={isSubmitting}>
-                    {isSubmitting ? "Adding..." : "Add Fund"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Create funding request</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setModalError(null);
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddFunding} disabled={isSubmitting}>
+                {isSubmitting ? "Adding..." : "Add Fund"}
+              </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Amount Modal */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+      {/* Enhanced Edit Modal - All Fields */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Amount</DialogTitle>
+            <DialogTitle>Edit Funding Request</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="editAmount">Amount</Label>
-              <Input
-                id="editAmount"
-                type="number"
-                value={editAmount}
-                onChange={(e) => setEditAmount(e.target.value)}
-              />
-            </div>
+            {editingFunding && (
+              <>
+                <div className="bg-muted p-3 rounded-md text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Merchant:</span>
+                    <span className="font-medium">{editingFunding.vas_merchants.business_name}</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-muted-foreground">Reference:</span>
+                    <span className="font-mono text-xs">{editingFunding.funding_ref}</span>
+                  </div>
+                </div>
 
-            {modalError && (
-              <div className="text-sm text-destructive">{modalError}</div>
+                <div className="space-y-2">
+                  <Label htmlFor="editAmount">Amount (₦)</Label>
+                  <Input
+                    id="editAmount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Enter amount"
+                    value={editFormData.amount}
+                    onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Current: {formatCurrency(editingFunding.amount)}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editDescription">Description</Label>
+                  <Input
+                    id="editDescription"
+                    placeholder="Enter description"
+                    value={editFormData.description}
+                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editSource">Source</Label>
+                  <Select 
+                    value={editFormData.source} 
+                    onValueChange={(value) => setEditFormData({ ...editFormData, source: value })}
+                  >
+                    <SelectTrigger id="editSource">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Online Payment">Online Payment</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
+            {modalError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {modalError}
+              </div>
+            )}
+
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 p-3 rounded-md">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Note:</strong> You can only edit funding requests that haven't been approved yet.
+              </p>
+            </div>
+
             <div className="flex justify-end gap-2 pt-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditing(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel editing</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleSaveEdit} disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Save amount changes</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setModalError(null);
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -618,6 +695,11 @@ export const FundingTable = ({
                 <p className="text-sm text-muted-foreground mt-1">{viewingFunding.description}</p>
               </div>
 
+              <div>
+                <span className="text-sm font-medium">Source</span>
+                <p className="text-sm text-muted-foreground mt-1">{viewingFunding.source}</p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-sm font-medium">Created At</span>
@@ -632,14 +714,9 @@ export const FundingTable = ({
               </div>
 
               <div className="flex justify-end pt-4">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
-                      Close
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Close details modal</TooltipContent>
-                </Tooltip>
+                <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
+                  Close
+                </Button>
               </div>
             </div>
           )}

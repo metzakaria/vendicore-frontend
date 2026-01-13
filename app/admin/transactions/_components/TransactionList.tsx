@@ -115,16 +115,13 @@ const fetchTransactions = async (
 export const TransactionList = () => {
   const router = useRouter();
   
-  // Set today as default for dates
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
   
-  // UI state
   const [showFilters, setShowFilters] = useState(true);
   
-  // Filter state
   const [referenceNo, setReferenceNo] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
   const [status, setStatus] = useState("all");
@@ -136,7 +133,6 @@ export const TransactionList = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
   const [page, setPage] = useState(1);
   
-  // Active filter values (applied when Search button is clicked)
   const [activeReferenceNo, setActiveReferenceNo] = useState("");
   const [activeBeneficiary, setActiveBeneficiary] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
@@ -147,7 +143,6 @@ export const TransactionList = () => {
   const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
   const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
 
-  // Fetch merchants, products, categories for dropdowns
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
     queryFn: () => getMerchantsForDropdown(),
@@ -172,7 +167,6 @@ export const TransactionList = () => {
     staleTime: 300000,
   });
 
-  // Initialize from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
@@ -204,7 +198,6 @@ export const TransactionList = () => {
     setProviderId(initialProviderId);
     setActiveProviderId(initialProviderId);
     
-    // Initialize dates from URL or use today as default
     const urlStartDate = params.get("startDate");
     const urlEndDate = params.get("endDate");
     if (urlStartDate) {
@@ -260,7 +253,6 @@ export const TransactionList = () => {
   });
 
   const handleSearch = () => {
-    // Apply filters when Search button is clicked
     setActiveReferenceNo(referenceNo);
     setActiveBeneficiary(beneficiary);
     setActiveStatus(status);
@@ -272,7 +264,6 @@ export const TransactionList = () => {
     setActiveEndDate(endDate);
     setPage(1);
     
-    // Update URL
     const params = new URLSearchParams();
     if (referenceNo) params.set("referenceNo", referenceNo);
     if (beneficiary) params.set("beneficiary", beneficiary);
@@ -288,7 +279,6 @@ export const TransactionList = () => {
     window.history.replaceState({}, "", newUrl);
   };
 
-
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
@@ -298,7 +288,6 @@ export const TransactionList = () => {
       return;
     }
 
-    // Prepare data for CSV export
     const exportData = transactions.map((tx) => ({
       "Transaction ID": tx.id,
       "Provider": tx.vas_provider_accounts?.account_name || "N/A",
@@ -365,17 +354,19 @@ export const TransactionList = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transactions</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Transactions</h2>
+          <p className="text-sm text-muted-foreground">
             View and manage all transactions
           </p>
         </div>
         <Button
           variant="outline"
+          size="sm"
           onClick={handleExport}
           disabled={!transactions || transactions.length === 0}
+          className="w-full sm:w-auto"
         >
           <Download className="mr-2 h-4 w-4" />
           Export CSV
@@ -388,24 +379,24 @@ export const TransactionList = () => {
           className="cursor-pointer select-none"
           onClick={() => setShowFilters(!showFilters)}
         >
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between text-base sm:text-lg">
             <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
               Filters
             </div>
             {showFilters ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             )}
           </CardTitle>
         </CardHeader>
         {showFilters && (
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                <Button variant="outline" className="w-full justify-start text-left font-normal text-sm">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {startDate ? format(startDate, "PPP") : "Start Date"}
                 </Button>
@@ -429,7 +420,7 @@ export const TransactionList = () => {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                <Button variant="outline" className="w-full justify-start text-left font-normal text-sm">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {endDate ? format(endDate, "PPP") : "End Date"}
                 </Button>
@@ -455,14 +446,16 @@ export const TransactionList = () => {
               placeholder="Reference No"
               value={referenceNo}
               onChange={(e) => setReferenceNo(e.target.value)}
+              className="text-sm"
             />
             <Input
               placeholder="Beneficiary"
               value={beneficiary}
               onChange={(e) => setBeneficiary(e.target.value)}
+              className="text-sm"
             />
             <Select value={merchantId} onValueChange={setMerchantId}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Merchant" />
               </SelectTrigger>
               <SelectContent>
@@ -475,7 +468,7 @@ export const TransactionList = () => {
               </SelectContent>
             </Select>
             <Select value={productId} onValueChange={setProductId} disabled={!products}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder={products ? "Product" : "Loading products..."} />
               </SelectTrigger>
               <SelectContent>
@@ -488,7 +481,7 @@ export const TransactionList = () => {
               </SelectContent>
             </Select>
             <Select value={categoryId} onValueChange={setCategoryId} disabled={!categories}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder={categories ? "Category" : "Loading categories..."} />
               </SelectTrigger>
               <SelectContent>
@@ -501,7 +494,7 @@ export const TransactionList = () => {
               </SelectContent>
             </Select>
             <Select value={providerId} onValueChange={setProviderId} disabled={!providers}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder={providers ? "Provider" : "Loading providers..."} />
               </SelectTrigger>
               <SelectContent>
@@ -514,7 +507,7 @@ export const TransactionList = () => {
               </SelectContent>
             </Select>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -526,7 +519,7 @@ export const TransactionList = () => {
             </Select>
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={handleSearch}>
+            <Button onClick={handleSearch} size="sm" className="w-full sm:w-auto">
               <Filter className="mr-2 h-4 w-4" />
               Search
             </Button>
@@ -535,8 +528,109 @@ export const TransactionList = () => {
         )}
       </Card>
 
-      {/* Table */}
-      <div className="relative rounded-md border">
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-3">
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
+          ))
+        ) : error ? (
+          <Card>
+            <CardContent className="p-6 text-center text-destructive">
+              Error loading transactions. Please try again.
+            </CardContent>
+          </Card>
+        ) : transactions.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No transactions found.
+            </CardContent>
+          </Card>
+        ) : (
+          transactions.map((transaction) => (
+            <Card key={transaction.id} className="overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(transaction.created_at || "").toLocaleDateString("en-NG", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })} at {new Date(transaction.created_at || "").toLocaleTimeString("en-NG", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <div className="font-semibold text-lg">
+                      {formatCurrency(transaction.amount)}
+                    </div>
+                    {Number(transaction.discount_amount) > 0 && (
+                      <div className="text-xs text-green-600">
+                        Discount: {formatCurrency(transaction.discount_amount)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {getStatusBadge(transaction.status, transaction.is_reverse)}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/admin/transactions/${transaction.id}`)}
+                      className="h-8 px-3"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t space-y-2">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Merchant</div>
+                    <div className="text-sm font-medium">{transaction.vas_merchants.business_name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      {transaction.vas_merchants.merchant_code}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-muted-foreground">Product</div>
+                    <div className="text-sm font-medium">{transaction.vas_products.product_name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      via: {transaction?.vas_provider_accounts?.account_name || "N/A"}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-muted-foreground">Reference</div>
+                    <div className="text-xs font-mono break-all">{transaction.merchant_ref}</div>
+                    {transaction.provider_ref && (
+                      <div className="text-xs text-muted-foreground font-mono break-all">
+                        {transaction.provider_ref}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-muted-foreground">Beneficiary</div>
+                    <div className="text-xs font-mono break-all">{transaction.beneficiary_account}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block relative rounded-md border">
         <TableOverlayLoader
           isVisible={isLoading || isFetching}
           label={isLoading ? "Loading transactions..." : "Updating transactions..."}
@@ -558,27 +652,13 @@ export const TransactionList = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[120px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[150px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[120px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[180px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[100px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[80px]" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="h-4 w-[60px]" />
-                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-4 w-[60px]" /></TableCell>
                   </TableRow>
                 ))
               ) : error ? (
@@ -624,7 +704,7 @@ export const TransactionList = () => {
                         {transaction.vas_products.product_name}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
-                        via: {transaction?.vas_provider_accounts.account_name}
+                        via: {transaction?.vas_provider_accounts?.account_name || "N/A"}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -675,16 +755,17 @@ export const TransactionList = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
             Showing page {currentPage} of {totalPages} ({data?.total || 0} total transactions)
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center sm:justify-end">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1 || isFetching}
+              className="flex-1 sm:flex-none"
             >
               Previous
             </Button>
@@ -693,6 +774,7 @@ export const TransactionList = () => {
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages || isFetching}
+              className="flex-1 sm:flex-none"
             >
               Next
             </Button>
@@ -702,4 +784,3 @@ export const TransactionList = () => {
     </div>
   );
 };
-

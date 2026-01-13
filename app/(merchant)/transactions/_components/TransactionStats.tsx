@@ -26,48 +26,47 @@ export const TransactionStats = ({
   transactionFail,
 }: TransactionStatsProps) => {
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           {isLoading ? (
-            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-24 mb-2" />
           ) : (
-            <div className="text-3xl font-bold">{transactionCount}</div>
+            <div className="text-xl sm:text-3xl font-bold">{transactionCount}</div>
           )}
-          <p className="text-xs text-muted-foreground uppercase mt-1">Transaction Count</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Transactions</p>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           {isLoading ? (
-            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-6 sm:h-8 w-20 sm:w-24 mb-2" />
           ) : (
-            <div className="text-3xl font-bold">{formatCurrency(transactionValue)}</div>
+            <div className="text-xl sm:text-3xl font-bold truncate">{formatCurrency(transactionValue)}</div>
           )}
-          <p className="text-xs text-muted-foreground uppercase mt-1">Transaction Value (NGN)</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Total Value</p>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           {isLoading ? (
-            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-24 mb-2" />
           ) : (
-            <div className="text-3xl font-bold">{formatCurrency(transactionSuccess)}</div>
+            <div className="text-xl sm:text-3xl font-bold truncate">{formatCurrency(transactionSuccess)}</div>
           )}
-          <p className="text-xs text-muted-foreground uppercase mt-1">Transaction Success (NGN)</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Success Value</p>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           {isLoading ? (
-            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-24 mb-2" />
           ) : (
-            <div className="text-3xl font-bold">{formatCurrency(transactionFail)}</div>
+            <div className="text-xl sm:text-3xl font-bold truncate">{formatCurrency(transactionFail)}</div>
           )}
-          <p className="text-xs text-muted-foreground uppercase mt-1">Transaction Fail (NGN)</p>
+          <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Fail Value</p>
         </CardContent>
       </Card>
     </div>
   );
 };
-

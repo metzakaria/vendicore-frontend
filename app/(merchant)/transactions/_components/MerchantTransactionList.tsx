@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Filter, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getMerchantTransactions } from "../_actions/getMerchantTransactions";
 import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
 import { getCategoriesForDropdown } from "../_actions/getCategoriesForDropdown";
@@ -80,6 +82,8 @@ export const MerchantTransactionList = () => {
   const [activeProductId, setActiveProductId] = useState("all");
   const [activeCategoryId, setActiveCategoryId] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
+
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Fetch products and categories for dropdown
   const { data: products } = useQuery({
@@ -283,30 +287,59 @@ export const MerchantTransactionList = () => {
         </p>
       </div>
 
-      {/* Filters */}
-      <TransactionFilters
-        startDate={startDate}
-        endDate={endDate}
-        referenceNo={referenceNo}
-        beneficiary={beneficiary}
-        amount={amount}
-        status={status}
-        productId={productId}
-        categoryId={categoryId}
-        products={products}
-        categories={categories}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onReferenceNoChange={setReferenceNo}
-        onBeneficiaryChange={setBeneficiary}
-        onAmountChange={setAmount}
-        onStatusChange={setStatus}
-        onProductIdChange={setProductId}
-        onCategoryIdChange={setCategoryId}
-        onSearch={handleSearch}
-        onExport={handleExport}
-        isExporting={isExporting}
-      />
+      {/* Mobile Filter Button (Floating) */}
+      <div className="sm:hidden">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="fixed bottom-6 right-6 z-50 rounded-full h-12 w-12 shadow-lg flex items-center justify-center"
+        >
+          {showMobileFilters ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <div className="relative">
+              <Filter className="h-5 w-5" />
+              {/* Optional: Show badge if filters are active */}
+              {(referenceNo || beneficiary || amount || status !== "all" || productId !== "all" || categoryId !== "all") && (
+                <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                  !
+                </span>
+              )}
+            </div>
+          )}
+        </Button>
+      </div>
+
+      {/* Filters - Conditionally show on mobile */}
+      <div className={showMobileFilters ? "block" : "hidden sm:block"}>
+        <TransactionFilters
+          startDate={startDate}
+          endDate={endDate}
+          referenceNo={referenceNo}
+          beneficiary={beneficiary}
+          amount={amount}
+          status={status}
+          productId={productId}
+          categoryId={categoryId}
+          products={products}
+          categories={categories}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onReferenceNoChange={setReferenceNo}
+          onBeneficiaryChange={setBeneficiary}
+          onAmountChange={setAmount}
+          onStatusChange={setStatus}
+          onProductIdChange={setProductId}
+          onCategoryIdChange={setCategoryId}
+          onSearch={() => {
+            handleSearch();
+            setShowMobileFilters(false); // Close filters after search on mobile
+          }}
+          onExport={handleExport}
+          isExporting={isExporting}
+        />
+      </div>
 
       {/* Stats Cards */}
       <TransactionStats
@@ -338,4 +371,3 @@ export const MerchantTransactionList = () => {
     </div>
   );
 };
-

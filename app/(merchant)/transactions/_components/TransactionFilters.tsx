@@ -63,18 +63,19 @@ export const TransactionFilters = ({
   onExport,
   isExporting = false,
 }: TransactionFiltersProps) => {
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   return (
     <Card>
       <CardHeader 
-        className="cursor-pointer select-none"
+        className="cursor-pointer select-none p-4 sm:p-6"
         onClick={() => setShowFilters(!showFilters)}
       >
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between text-lg sm:text-xl">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filters
+            <span className="hidden sm:inline">Filters</span>
+            <span className="sm:hidden">Filter Transactions</span>
           </div>
           {showFilters ? (
             <ChevronUp className="h-5 w-5 text-muted-foreground" />
@@ -84,13 +85,15 @@ export const TransactionFilters = ({
         </CardTitle>
       </CardHeader>
       {showFilters && (
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <CardContent className="p-4 sm:p-6">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-left font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "PPP") : "Start Date"}
+              <Button variant="outline" className="w-full justify-start text-left font-normal text-sm">
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {startDate ? format(startDate, "PP") : "Start Date"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -112,9 +115,11 @@ export const TransactionFilters = ({
           </Popover>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-left font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, "PPP") : "End Date"}
+              <Button variant="outline" className="w-full justify-start text-left font-normal text-sm">
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {endDate ? format(endDate, "PP") : "End Date"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -138,15 +143,17 @@ export const TransactionFilters = ({
             placeholder="Reference No"
             value={referenceNo}
             onChange={(e) => onReferenceNoChange(e.target.value)}
+            className="text-sm"
           />
           <Input
             placeholder="Beneficiary"
             value={beneficiary}
             onChange={(e) => onBeneficiaryChange(e.target.value)}
+            className="text-sm"
           />
           <Select value={productId} onValueChange={onProductIdChange} disabled={!products}>
-            <SelectTrigger>
-              <SelectValue placeholder={products ? "Product" : "Loading products..."} />
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder={products ? "Product" : "Loading..."} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Products</SelectItem>
@@ -164,8 +171,8 @@ export const TransactionFilters = ({
             </SelectContent>
           </Select>
           <Select value={categoryId} onValueChange={onCategoryIdChange} disabled={!categories}>
-            <SelectTrigger>
-              <SelectValue placeholder={categories ? "Category" : "Loading categories..."} />
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder={categories ? "Category" : "Loading..."} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -183,7 +190,7 @@ export const TransactionFilters = ({
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={onStatusChange}>
-            <SelectTrigger>
+            <SelectTrigger className="text-sm">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -198,25 +205,34 @@ export const TransactionFilters = ({
             placeholder="Amount"
             value={amount}
             onChange={(e) => onAmountChange(e.target.value)}
+            className="text-sm"
           />
         </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={onExport} disabled={isExporting}>
+        <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-end">
+          <Button 
+            variant="secondary" 
+            onClick={onExport} 
+            disabled={isExporting}
+            className="w-full sm:w-auto order-2 sm:order-1"
+          >
             {isExporting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting...
+                <span className="truncate">Exporting...</span>
               </>
             ) : (
               <>
-                <Download className="mr-2 h-4 w-4" />
-                Export
+                <Download className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">Export CSV</span>
               </>
             )}
           </Button>
-          <Button onClick={onSearch}>
-            <Filter className="mr-2 h-4 w-4" />
-            Search
+          <Button 
+            onClick={onSearch}
+            className="w-full sm:w-auto order-1 sm:order-2"
+          >
+            <Filter className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Search Transactions</span>
           </Button>
         </div>
       </CardContent>
@@ -224,4 +240,3 @@ export const TransactionFilters = ({
     </Card>
   );
 };
-

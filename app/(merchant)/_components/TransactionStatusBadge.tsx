@@ -4,10 +4,19 @@ import { CheckCircle2, XCircle, Clock } from "lucide-react";
 interface TransactionStatusBadgeProps {
   status: string;
   showIcon?: boolean;
+  size?: "sm" | "default" | "lg";
 }
 
-export const TransactionStatusBadge = ({ status, showIcon = true }: TransactionStatusBadgeProps) => {
-  const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string; icon: any }> = {
+export const TransactionStatusBadge = ({ 
+  status, 
+  showIcon = true,
+  size = "default"
+}: TransactionStatusBadgeProps) => {
+  const statusConfig: Record<string, { 
+    variant: "default" | "secondary" | "destructive" | "outline"; 
+    className: string; 
+    icon: any 
+  }> = {
     success: {
       variant: "default",
       className: "bg-green-500 hover:bg-green-600 text-white border-green-500",
@@ -33,14 +42,19 @@ export const TransactionStatusBadge = ({ status, showIcon = true }: TransactionS
   
   const Icon = config.icon;
   
+  const sizeClasses = {
+    sm: "text-xs px-2 py-0.5",
+    default: "text-sm px-2.5 py-0.5",
+    lg: "text-base px-3 py-1",
+  };
+  
   return (
     <Badge 
       variant={config.variant} 
-      className={`flex items-center gap-1 w-fit ${config.className} ${!showIcon ? 'gap-0' : ''}`}
+      className={`flex items-center gap-1 w-fit ${config.className} ${sizeClasses[size]} ${!showIcon ? 'gap-0' : ''}`}
     >
       {showIcon && <Icon className="h-3 w-3" />}
       {status.toUpperCase()}
     </Badge>
   );
 };
-

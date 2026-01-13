@@ -5,12 +5,16 @@ import prisma from "@/lib/prisma";
 interface RevenueReportParams {
   startDate?: string;
   endDate?: string;
+  productIds?: string[];
+  merchantIds?: string[];
   groupBy?: "day" | "week" | "month";
 }
 
 export const getRevenueReport = async (params: RevenueReportParams = {}) => {
   try {
-    const where: any = {};
+    const where: any = {
+      status: "success"
+    };
 
     // Date range filter
     if (params.startDate || params.endDate) {
@@ -25,8 +29,15 @@ export const getRevenueReport = async (params: RevenueReportParams = {}) => {
       }
     }
 
-    // Only successful transactions
-    where.status = "success";
+    // Product filter
+    if (params.productIds && params.productIds.length > 0) {
+      where.product_id = { in: params.productIds.map(id => parseInt(id)) };
+    }
+
+    // Merchant filter
+    if (params.merchantIds && params.merchantIds.length > 0) {
+      where.merchant_id = { in: params.merchantIds.map(id => parseInt(id)) };
+    }
 
     // Get transaction summary
     const [transactionSummary, productSummary, merchantSummary] = await Promise.all([
@@ -141,4 +152,3 @@ export const getRevenueReport = async (params: RevenueReportParams = {}) => {
     };
   }
 };
-
