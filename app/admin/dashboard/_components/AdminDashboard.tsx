@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ActivityChart } from "./ActivityChart";
 import { KPICard } from "./KPICard";
 import { RecentTransactions } from "./RecentTransactions";
 import { getDashboardStats } from "../_actions/getDashboardStats";
@@ -172,6 +173,7 @@ export const AdminDashboard = ({ userName, userEmail }: AdminDashboardProps) => 
 
       {/* Recent Transactions - Full width on mobile */}
       <div className="grid gap-4">
+        <ActivityChart timeFilter={timeFilter} />
         <RecentTransactions />
       </div>
     </div>

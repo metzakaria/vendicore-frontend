@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -23,7 +21,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { approveFunding } from "../../_actions/approveFunding";
 import { rejectFunding } from "../../_actions/rejectFunding";
-import { updateFundingAmount } from "../../_actions/updateFundingAmount";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface FundingDetailsProps {
@@ -33,9 +30,6 @@ interface FundingDetailsProps {
 export const FundingDetails = ({ funding }: FundingDetailsProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editAmount, setEditAmount] = useState(funding.amount);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,36 +56,6 @@ export const FundingDetails = ({ funding }: FundingDetailsProps) => {
   };
 
   const canEdit = !funding.is_approved && !funding.is_credited && funding.is_active;
-
-  const handleUpdateAmount = async () => {
-    if (Number(editAmount) <= 0) {
-      setError("Amount must be greater than 0");
-      return;
-    }
-
-    setIsUpdating(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const result = await updateFundingAmount(funding.funding_ref, editAmount);
-      if (result.success) {
-        setSuccess("Funding amount updated successfully");
-        setIsEditing(false);
-        queryClient.invalidateQueries({ queryKey: ["funding-requests"] });
-        // Reload page to get updated data
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        setError(result.error || "Failed to update funding amount");
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred while updating the amount");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   const handleApprove = async () => {
     setIsApproving(true);
@@ -177,11 +141,10 @@ export const FundingDetails = ({ funding }: FundingDetailsProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-              disabled={isUpdating}
+              onClick={() => router.push(`/admin/funding/${funding.funding_ref}/edit`)}
             >
               <Edit className="mr-2 h-4 w-4" />
-              {isEditing ? "Cancel" : "Edit Amount"}
+              Edit
             </Button>
           )}
         </div>
@@ -219,35 +182,7 @@ export const FundingDetails = ({ funding }: FundingDetailsProps) => {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Amount</span>
-                {isEditing ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editAmount}
-                      onChange={(e) => setEditAmount(e.target.value)}
-                      className="w-[150px]"
-                      disabled={isUpdating}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleUpdateAmount}
-                      disabled={isUpdating}
-                    >
-                      {isUpdating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <span className="text-lg font-bold">{formatCurrency(funding.amount)}</span>
-                )}
+                <span className="text-lg font-bold">{formatCurrency(funding.amount)}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">

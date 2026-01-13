@@ -1,15 +1,28 @@
 "use client";
 
-import { ArrowLeft, Building2, Wallet, Activity, User, MapPin, Globe, Calendar, Key, Shield, Hash, CreditCard, TrendingUp, Clock, Pencil } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Building2, Wallet, Activity, User, MapPin, Globe, Calendar, Key, Shield, Hash, CreditCard, TrendingUp, Clock, Pencil, RefreshCw, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MerchantInfoCards } from "./MerchantInfoCards";
 import { MerchantFunding } from "./MerchantFunding";
 import { MerchantDiscounts } from "./MerchantDiscounts";
+import { MerchantLoginRecords } from "./MerchantLoginRecords";
+import { resetApiKeys } from "../_actions/resetApiKeys";
 
 interface MerchantDetailsProps {
   merchant: any;
@@ -17,6 +30,26 @@ interface MerchantDetailsProps {
 
 export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
   const router = useRouter();
+  const [isResetting, setIsResetting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [newKeys, setNewKeys] = useState<{ apiKey: string; apiSecret: string } | null>(null);
+
+  const handleResetKeys = async () => {
+    setIsResetting(true);
+    const result = await resetApiKeys(merchant.id);
+    if (result.success) {
+      setNewKeys({
+        apiKey: result.apiKey!,
+        apiSecret: result.apiSecret!,
+      });
+      router.refresh();
+    } else {
+      // Handle error, maybe with a toast notification
+      console.error(result.error);
+    }
+    setIsResetting(false);
+    setShowResetConfirm(false);
+  };
 
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-NG", {
@@ -103,6 +136,12 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
             className="data-[state=active]:bg-transparent  border-0  data-[state=active]:shadow-none data-[state=active]:border-b-[4px] data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none border-b-[3px] border-transparent px-6 py-3 text-muted-foreground font-medium transition-all"
           >
             Discounts
+          </TabsTrigger>
+          <TabsTrigger 
+            value="user_activities"
+            className="data-[state=active]:bg-transparent  border-0  data-[state=active]:shadow-none data-[state=active]:border-b-[4px] data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none border-b-[3px] border-transparent px-6 py-3 text-muted-foreground font-medium transition-all"
+          >
+            User Activities
           </TabsTrigger>
         </TabsList>
 
@@ -277,9 +316,36 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">API CREDENTIALS</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">API CREDENTIALS</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowResetConfirm(true)}
+                  disabled={isResetting}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset API Keys
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
+              {newKeys && (
+                <div className="p-4 border-l-4 border-green-500 bg-green-50 rounded-md">
+                  <h3 className="font-bold text-green-800">API Keys Successfully Reset</h3>
+                  <p className="text-sm text-green-700 mt-2">Please copy the new keys. They will not be shown again.</p>
+                  <div className="space-y-2 mt-4">
+                    <div>
+                      <span className="text-xs text-muted-foreground">New API Key</span>
+                      <p className="text-sm font-mono mt-1 p-2 bg-gray-100 rounded break-all">{newKeys.apiKey}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">New API Secret</span>
+                      <p className="text-sm font-mono mt-1 p-2 bg-gray-100 rounded break-all">{newKeys.apiSecret}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-4">
                   <div>
@@ -328,7 +394,29 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
         <TabsContent value="discounts" className="space-y-4 mt-6">
           <MerchantDiscounts merchantId={merchant.id} />
         </TabsContent>
+
+        <TabsContent value="user_activities" className="space-y-4 mt-6">
+          <MerchantLoginRecords merchantId={merchant.id} />
+        </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently revoke the current API keys and generate new ones. The merchant will need to update their integration with the new keys.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetKeys} disabled={isResetting}>
+              {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isResetting ? "Resetting..." : "Continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

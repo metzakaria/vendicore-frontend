@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { MerchantKPICard } from "./MerchantKPICard";
 import { RecentTransactions } from "./RecentTransactions";
+import { TransactionChart } from "./TransactionChart";
 import { getMerchantDashboardStats } from "../_actions/getMerchantDashboardStats";
 import { getRecentMerchantTransactions } from "../_actions/getRecentMerchantTransactions";
 
@@ -186,6 +187,11 @@ export const MerchantDashboard = () => {
           description={`Success rate (${getFilterLabel(timeFilter).toLowerCase()})`}
           icon={TrendingUp}
         />
+      </div>
+
+      {/* Transaction Chart */}
+      <div className="grid gap-4">
+        <TransactionChart timeFilter={timeFilter} />
       </div>
 
       {/* Recent Transactions */}

@@ -6,6 +6,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -21,19 +28,43 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getRevenueReport } from "../../_actions/getRevenueReport";
 import { exportToCsv } from "@/lib/utils/exportToCsv";
+import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
+import { getMerchantsForDropdown } from "@/app/admin/funding/_actions/getMerchantsForDropdown";
 
 export const ProductReport = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [merchantId, setMerchantId] = useState<string>("all");
+  const [productId, setProductId] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
 
+  const { data: merchants } = useQuery({
+    queryKey: ["merchants-dropdown"],
+    queryFn: () => getMerchantsForDropdown(),
+    staleTime: 300000,
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ["products-dropdown"],
+    queryFn: () => getProductsForDropdown(),
+    staleTime: 300000,
+  });
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["product-report", startDate?.toISOString(), endDate?.toISOString()],
+    queryKey: [
+      "product-report",
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+      merchantId,
+      productId,
+    ],
     queryFn: () =>
       getRevenueReport({
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
+        merchantId: merchantId !== "all" ? merchantId : undefined,
+        productId: productId !== "all" ? productId : undefined,
       }),
     staleTime: 30000,
   });
@@ -55,6 +86,8 @@ export const ProductReport = () => {
       const exportData = await getRevenueReport({
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
+        merchantId: merchantId !== "all" ? merchantId : undefined,
+        productId: productId !== "all" ? productId : undefined,
       });
 
       if (!exportData || !exportData.productRevenue || exportData.productRevenue.length === 0) {
@@ -113,18 +146,18 @@ export const ProductReport = () => {
         </Button>
       </div>
 
-      {/* Date Filters */}
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Date Range</CardTitle>
+          <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Date</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {startDate ? format(startDate, "PPP") : "Pick a date"}
                   </Button>
@@ -143,7 +176,7 @@ export const ProductReport = () => {
               <label className="text-sm font-medium">End Date</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {endDate ? format(endDate, "PPP") : "Pick a date"}
                   </Button>
@@ -157,6 +190,38 @@ export const ProductReport = () => {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Merchant</label>
+              <Select value={merchantId} onValueChange={setMerchantId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select merchant" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Merchants</SelectItem>
+                  {merchants?.map((merchant) => (
+                    <SelectItem key={merchant.id} value={merchant.id}>
+                      {merchant.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Product</label>
+              <Select value={productId} onValueChange={setProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select product" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  {products?.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>

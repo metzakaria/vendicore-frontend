@@ -1,14 +1,30 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 interface ActivityDataParams {
   startDate: string;
   endDate: string;
 }
 
-export const getActivityData = async (params: ActivityDataParams) => {
+export const getMerchantActivityData = async (params: ActivityDataParams) => {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      throw new Error("User not authenticated");
+    }
+
+    const merchant = await prisma.vas_merchants.findUnique({
+      where: { user_id: BigInt(session.user.id) },
+      select: { id: true },
+    });
+
+    if (!merchant) {
+      throw new Error("Merchant not found");
+    }
+
     const { startDate, endDate } = params;
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -26,6 +42,7 @@ export const getActivityData = async (params: ActivityDataParams) => {
     const transactionsByDay = await prisma.vas_transactions.groupBy({
       by: ['created_at'],
       where: {
+        merchant_id: merchant.id,
         created_at: {
           gte: start,
           lte: end,
@@ -53,11 +70,11 @@ export const getActivityData = async (params: ActivityDataParams) => {
 
     return { activityData, maxCount };
   } catch (error) {
-    console.error("Error fetching activity data:", error);
+    console.error("Error fetching merchant activity data:", error);
     return {
       activityData: [],
       maxCount: 1,
+      error: (error as Error).message,
     };
   }
 };
-

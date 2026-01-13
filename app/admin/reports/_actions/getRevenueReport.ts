@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 interface RevenueReportParams {
   startDate?: string;
   endDate?: string;
+  productId?: string;
+  merchantId?: string;
   productIds?: string[];
   merchantIds?: string[];
   groupBy?: "day" | "week" | "month";
@@ -29,12 +31,22 @@ export const getRevenueReport = async (params: RevenueReportParams = {}) => {
       }
     }
 
-    // Product filter
+    // Single Product filter
+    if (params.productId) {
+      where.product_id = parseInt(params.productId);
+    }
+
+    // Multiple Products filter
     if (params.productIds && params.productIds.length > 0) {
       where.product_id = { in: params.productIds.map(id => parseInt(id)) };
     }
 
-    // Merchant filter
+    // Single Merchant filter
+    if (params.merchantId) {
+      where.merchant_id = parseInt(params.merchantId);
+    }
+
+    // Multiple Merchants filter
     if (params.merchantIds && params.merchantIds.length > 0) {
       where.merchant_id = { in: params.merchantIds.map(id => parseInt(id)) };
     }
