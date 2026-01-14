@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Building2, Wallet, Activity, User, MapPin, Globe, Calendar, Key, Shield, Hash, CreditCard, TrendingUp, Clock, Pencil, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Wallet, Activity, User, MapPin, Globe, Calendar, Key, Shield, Hash, CreditCard, TrendingUp, Clock, Pencil, RefreshCw, Loader2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,6 +70,9 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
   const [isResetting, setIsResetting] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [newKeys, setNewKeys] = useState<{ apiKey: string; apiSecret: string } | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [showApiSecret, setShowApiSecret] = useState(false);
+  const [showApiAccessIps, setShowApiAccessIps] = useState(false);
 
   const handleResetKeys = async () => {
     setIsResetting(true);
@@ -381,22 +384,90 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs text-muted-foreground">API Key</span>
-                    <p className="text-sm font-mono mt-1 break-all">
-                      {merchant.api_key ? `${merchant.api_key.substring(0, 30)}...` : "N/A"}
-                    </p>
+                    <div className="relative mt-1">
+                      <p className="text-sm font-mono p-2 bg-gray-100 rounded break-all pr-10">
+                        {merchant.api_key
+                          ? showApiKey
+                            ? merchant.api_key
+                            : "****"
+                          : "N/A"}
+                      </p>
+                      {merchant.api_key && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowApiKey((prev) => !prev)}
+                          aria-label={showApiKey ? "Hide API Key" : "Show API Key"}
+                        >
+                          {showApiKey ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <Separator className="opacity-50" />
                   <div>
                     <span className="text-xs text-muted-foreground">API Secret</span>
-                    <p className="text-sm font-mono mt-1 break-all">
-                      {merchant.api_secret ? `${merchant.api_secret.substring(0, 30)}...` : "N/A"}
-                    </p>
+                    <div className="relative mt-1">
+                      <p className="text-sm font-mono p-2 bg-gray-100 rounded break-all pr-10">
+                        {merchant.api_secret
+                          ? showApiSecret
+                            ? merchant.api_secret
+                            : "****"
+                          : "N/A"}
+                      </p>
+                      {merchant.api_secret && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowApiSecret((prev) => !prev)}
+                          aria-label={showApiSecret ? "Hide API Secret" : "Show API Secret"}
+                        >
+                          {showApiSecret ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs text-muted-foreground">Allowed IP</span>
-                    <p className="text-sm font-medium mt-1">{merchant.api_access_ips || "N/A"}</p>
+                    <div className="relative mt-1">
+                      <p className="text-sm font-medium p-2 bg-gray-100 rounded break-all pr-10">
+                        {merchant.api_access_ips
+                          ? showApiAccessIps
+                            ? merchant.api_access_ips
+                            : "**********" // Mask the IP
+                          : "N/A"}
+                      </p>
+                      {merchant.api_access_ips && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowApiAccessIps((prev) => !prev)}
+                          aria-label={showApiAccessIps ? "Hide Allowed IP" : "Show Allowed IP"}
+                        >
+                          {showApiAccessIps ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <Separator className="opacity-50" />
                   <div>

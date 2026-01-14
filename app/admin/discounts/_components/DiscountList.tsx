@@ -339,10 +339,8 @@ export const DiscountList = () => {
         }
         queryClient.invalidateQueries({ queryKey: ["discounts"] });
         queryClient.invalidateQueries({ queryKey: ["discounts-by-merchant"] });
-        setTimeout(() => {
-          setIsManageModalOpen(false);
-          setSaveSuccess(null);
-        }, 1500);
+        setIsManageModalOpen(false);
+        setSaveSuccess(null);
       } else {
         setSaveError(result.error || "Failed to save discounts");
       }
