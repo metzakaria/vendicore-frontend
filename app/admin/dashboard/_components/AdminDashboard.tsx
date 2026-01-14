@@ -19,12 +19,11 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
-  DollarSign,
-  Server,
   Coins,
+  Server,
 } from "lucide-react";
 
-type TimeFilter = "today" | "7days" | "14days" | "30days";
+type TimeFilter = "today" | "7days" | "14days" | "30days" | "year";
 
 const getDateRange = (filter: TimeFilter) => {
   const today = new Date();
@@ -50,6 +49,11 @@ const getDateRange = (filter: TimeFilter) => {
     case "30days":
       startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
+      startDate.setHours(0, 0, 0, 0);
+      break;
+    case "year":
+      startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 1);
       startDate.setHours(0, 0, 0, 0);
       break;
     default:
@@ -79,6 +83,8 @@ const getFilterLabel = (filter: TimeFilter) => {
       return "Last 2 Weeks";
     case "30days":
       return "Last 30 Days";
+    case "year":
+      return "Last Year";
     default:
       return "Today";
   }
@@ -122,6 +128,7 @@ export const AdminDashboard = ({ userName, userEmail }: AdminDashboardProps) => 
               <SelectItem value="7days">Last 7 Days</SelectItem>
               <SelectItem value="14days">Last 2 Weeks</SelectItem>
               <SelectItem value="30days">Last 30 Days</SelectItem>
+              <SelectItem value="year">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -252,6 +252,22 @@ export const TransactionList = () => {
     staleTime: 30000,
   });
 
+  const handleResetFilters = () => {
+    setReferenceNo("");
+    setBeneficiary("");
+    setStatus("all");
+    setMerchantId("all");
+    setProductId("all");
+    setCategoryId("all");
+    setProviderId("all");
+    setStartDate(today);
+    setEndDate(todayEnd);
+    setPage(1); // Reset page to 1 on filter reset
+    
+    // Call handleSearch to apply the reset filters and update the URL
+    handleSearch();
+  };
+
   const handleSearch = () => {
     setActiveReferenceNo(referenceNo);
     setActiveBeneficiary(beneficiary);
@@ -518,7 +534,10 @@ export const TransactionList = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end gap-2">
+            <Button onClick={handleResetFilters} size="sm" variant="outline" className="w-full sm:w-auto">
+              Reset Filters
+            </Button>
             <Button onClick={handleSearch} size="sm" className="w-full sm:w-auto">
               <Filter className="mr-2 h-4 w-4" />
               Search
