@@ -28,9 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getDataPackages } from "../_actions/getDataPackages";
 import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface DataPackage {
   id: string;
@@ -92,7 +92,7 @@ export const DataPackageList = () => {
   const { data: products } = useQuery({
     queryKey: ["products-dropdown"],
     queryFn: () => getProductsForDropdown(),
-    staleTime: 300000, // 5 minutes
+    staleTime: 300000,
   });
 
   useEffect(() => {
@@ -105,7 +105,6 @@ export const DataPackageList = () => {
     setPage(Number(params.get("page")) || 1);
   }, []);
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -115,9 +114,7 @@ export const DataPackageList = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Update URL when debounced search changes (without page reload)
   useEffect(() => {
-    // Skip initial render to prevent flicker
     if (debouncedSearch === "" && status === "all" && productId === "all" && page === 1) {
       return;
     }
@@ -129,7 +126,6 @@ export const DataPackageList = () => {
     if (page > 1) params.set("page", page.toString());
 
     const newUrl = `/admin/data-packages${params.toString() ? `?${params.toString()}` : ""}`;
-    // Use replaceState to update URL without triggering navigation
     if (window.location.pathname + window.location.search !== newUrl) {
       window.history.replaceState({}, "", newUrl);
     }
@@ -175,7 +171,6 @@ export const DataPackageList = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Data Packages</h2>
@@ -198,7 +193,6 @@ export const DataPackageList = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -234,15 +228,9 @@ export const DataPackageList = () => {
         </Select>
       </div>
 
-      {/* Progress bar for background fetching */}
-      {isFetching && !isLoading && (
-        <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-full animate-pulse bg-primary/20" />
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border relative">
+        <TableOverlayLoader isVisible={isLoading || isFetching} />
+        
         <Table>
           <TableHeader>
             <TableRow>
@@ -257,48 +245,27 @@ export const DataPackageList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[120px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[150px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[100px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[80px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[80px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[80px]" />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Skeleton className="h-4 w-[80px]" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : error ? (
+            {error ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-destructive">
-                  Error loading data packages. Please try again.
+                <TableCell colSpan={8} className="text-center py-8">
+                  <p className="text-destructive mb-2">Error loading data packages</p>
+                  <p className="text-sm text-muted-foreground">
+                    {error instanceof Error ? error.message : "Please try again"}
+                  </p>
                 </TableCell>
               </TableRow>
             ) : packages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No data packages found.
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  No data packages found
                 </TableCell>
               </TableRow>
             ) : (
               packages.map((pkg) => (
                 <TableRow key={pkg.id}>
-                  <TableCell className="font-medium"><div className="max-w-88 truncate">{pkg.description}</div></TableCell>
+                  <TableCell className="font-medium">
+                    <div className="max-w-[200px] truncate">{pkg.description}</div>
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{pkg.vas_products.product_name}</div>
@@ -346,7 +313,6 @@ export const DataPackageList = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
@@ -375,4 +341,3 @@ export const DataPackageList = () => {
     </div>
   );
 };
-

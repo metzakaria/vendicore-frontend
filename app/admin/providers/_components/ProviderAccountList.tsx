@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getProviderAccounts } from "../_actions/getProviderAccounts";
 import { getProvidersForDropdown } from "../_actions/getProvidersForDropdown";
 import { getProviderAccountById } from "../_actions/getProviderAccountById";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface ProviderAccount {
   id: string;
@@ -218,11 +219,7 @@ export const ProviderAccountList = () => {
       </div>
 
       <div className="rounded-md border relative">
-        {isFetching && !isLoading && (
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 z-10">
-            <div className="h-full bg-primary animate-pulse" style={{ width: "30%" }} />
-          </div>
-        )}
+        <TableOverlayLoader isVisible={isLoading || isFetching} />
         <Table>
           <TableHeader>
             <TableRow>
@@ -236,20 +233,7 @@ export const ProviderAccountList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && !data ? (
-              // Initial load - show skeleton
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                </TableRow>
-              ))
-            ) : error ? (
+            {error ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-destructive mb-2">Error loading provider accounts</p>
@@ -416,18 +400,18 @@ export const ProviderAccountList = () => {
                   <label className="text-sm font-medium text-muted-foreground">Configuration</label>
                   <div className="mt-2 p-3 bg-muted rounded-md">
                     {typeof selectedAccount.config === 'object' ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 w-full">
                         {Object.entries(selectedAccount.config as Record<string, any>).map(([key, value]) => (
-                          <div key={key} className="flex justify-between items-start">
+                          <div key={key} className="grid grid-cols-[auto_1fr] items-start gap-x-2">
                             <span className="font-medium text-sm">{key}:</span>
-                            <span className="text-sm text-muted-foreground ml-2 text-right">
+                            <span className="text-sm text-muted-foreground break-all max-w-full">
                               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm">{String(selectedAccount.config)}</p>
+                      <p className="text-sm break-all max-w-full">{String(selectedAccount.config)}</p>
                     )}
                   </div>
                 </div>

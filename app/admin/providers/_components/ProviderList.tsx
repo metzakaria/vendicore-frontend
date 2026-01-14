@@ -37,6 +37,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProviders } from "../_actions/getProviders";
 import { getProviderById } from "../_actions/getProviderById";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Provider {
   id: string;
@@ -195,11 +196,8 @@ export const ProviderList = () => {
       </div>
 
       <div className="rounded-md border relative">
-        {isFetching && !isLoading && (
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 z-10">
-            <div className="h-full bg-primary animate-pulse" style={{ width: "30%" }} />
-          </div>
-        )}
+        <TableOverlayLoader isVisible={isFetching} />
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -213,20 +211,7 @@ export const ProviderList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && !data ? (
-              // Initial load - show skeleton
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                </TableRow>
-              ))
-            ) : error ? (
+            {error ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-destructive mb-2">Error loading providers</p>
@@ -403,14 +388,14 @@ export const ProviderList = () => {
                         {Object.entries(selectedProvider.config_schema as Record<string, any>).map(([key, value]) => (
                           <div key={key} className="flex justify-between items-start">
                             <span className="font-medium text-sm">{key}:</span>
-                            <span className="text-sm text-muted-foreground ml-2 text-right">
+                            <span className="text-sm text-muted-foreground ml-2 break-all overflow-x-auto flex-1">
                               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm">{String(selectedProvider.config_schema)}</p>
+                      <p className="text-sm break-all overflow-x-auto">{String(selectedProvider.config_schema)}</p>
                     )}
                   </div>
                 </div>

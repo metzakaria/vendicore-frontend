@@ -45,7 +45,22 @@ export const getDataPackages = async (params: GetDataPackagesParams = {}) => {
         orderBy: {
           created_at: "desc",
         },
-        include: {
+        select: { // Use select instead of include to exclude 'network'
+          id: true,
+          data_code: true,
+          tariff_id: true,
+          amount: true,
+          description: true,
+          duration: true,
+          value: true,
+          plan_name: true,
+          short_desc: true,
+          payvantage_code: true,
+          creditswitch_code: true,
+          is_active: true,
+          created_at: true,
+          updated_at: true,
+          product_id: true,
           vas_products: {
             select: {
               id: true,
@@ -101,11 +116,8 @@ export const getDataPackagesWithProviderCode = async (params: GetDataPackagesPro
     const network = params.network || "none";
     const providerId = params.providerId || "";
   console.log("========================"+network);
-    const where: any = {};
-
-      where.network = network;
- 
-
+        const where: any = {};
+    
     const [packages, total] = await Promise.all([
       prisma.vas_data_packages.findMany({
         where,
