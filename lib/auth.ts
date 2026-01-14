@@ -27,7 +27,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        // Verify password (supports Django pbkdf2_sha256 and bcrypt)
         const isPasswordValid = await verifyDjangoPassword(
           credentials.password,
           user.password
@@ -36,6 +35,12 @@ export const authOptions: NextAuthOptions = {
         if (!isPasswordValid) {
           throw new Error("Invalid email or password");
         }
+
+        // Update last_login timestamp
+        await prisma.vas_users.update({
+          where: { id: user.id },
+          data: { last_login: new Date() },
+        });
 
         // Determine user role
         let role = "user";

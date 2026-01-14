@@ -85,6 +85,7 @@ export const getUsers = async (params: GetUsersParams = {}) => {
             id: user.vas_merchants.id.toString(),
           }
         : null,
+      last_login: user.last_login?.toISOString() || null,
     }));
 
     const result = {

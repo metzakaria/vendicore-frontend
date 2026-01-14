@@ -15,45 +15,7 @@ import { RecentTransactions } from "./RecentTransactions";
 import { TransactionChart } from "./TransactionChart";
 import { getMerchantDashboardStats } from "../_actions/getMerchantDashboardStats";
 import { getRecentMerchantTransactions } from "../_actions/getRecentMerchantTransactions";
-
-type TimeFilter = "today" | "7days" | "14days" | "30days";
-
-const getDateRange = (filter: TimeFilter) => {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
-  const endDate = today.toISOString();
-
-  let startDate: Date;
-  switch (filter) {
-    case "today":
-      startDate = new Date();
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case "7days":
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - 7);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case "14days":
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - 14);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case "30days":
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    default:
-      startDate = new Date();
-      startDate.setHours(0, 0, 0, 0);
-  }
-
-  return {
-    startDate: startDate.toISOString(),
-    endDate,
-  };
-};
+import { TimeFilter, getDateRange, getFilterLabel } from "@/lib/date-filters";
 
 const fetchDashboardStats = async (filter: TimeFilter) => {
   const dateRange = getDateRange(filter);
@@ -106,6 +68,10 @@ export const MerchantDashboard = () => {
         return "Last 2 Weeks";
       case "30days":
         return "Last 30 Days";
+      case "3months":
+        return "Last 3 Months";
+      case "year":
+        return "Last Year";
       default:
         return "Today";
     }
@@ -134,6 +100,8 @@ export const MerchantDashboard = () => {
               <SelectItem value="7days">Last 7 Days</SelectItem>
               <SelectItem value="14days">Last 2 Weeks</SelectItem>
               <SelectItem value="30days">Last 30 Days</SelectItem>
+              <SelectItem value="3months">Last 3 Months</SelectItem>
+              <SelectItem value="year">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>

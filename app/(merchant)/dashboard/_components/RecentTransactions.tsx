@@ -54,7 +54,7 @@ export const RecentTransactions = ({
       <CardContent>
         <div className="rounded-md border">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[680px] text-xs sm:text-sm">
+            <Table className="text-xs sm:text-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
@@ -62,7 +62,7 @@ export const RecentTransactions = ({
                 <TableHead>Beneficiary</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Reference</TableHead>
+                <TableHead className="hidden md:table-cell">Reference</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -100,7 +100,7 @@ export const RecentTransactions = ({
                     <TableCell className="text-sm font-mono">{tx.beneficiary_account}</TableCell>
                     <TableCell className="text-sm font-medium">{formatCurrency(tx.amount)}</TableCell>
                     <TableCell><TransactionStatusBadge status={tx.status} showIcon={false} /></TableCell>
-                    <TableCell className="text-sm font-mono">{tx.merchant_ref}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm font-mono">{tx.merchant_ref}</TableCell>
                   </TableRow>
                 ))
               )}

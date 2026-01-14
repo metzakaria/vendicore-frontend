@@ -106,7 +106,7 @@ export const FundingList = () => {
     setDebouncedSearch(initialSearch);
     setStatus(params.get("status") || "all");
     setMerchantId(params.get("merchant_id") || "all");
-    setHideAutoReverse(  true );
+    setHideAutoReverse(params.get("hide_auto_reverse") === "false" ? false : true);
     setPage(Number(params.get("page")) || 1);
   }, []);
 
@@ -130,7 +130,11 @@ export const FundingList = () => {
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (status !== "all") params.set("status", status);
     if (merchantId !== "all") params.set("merchant_id", merchantId);
-    //if (hideAutoReverse !== true) params.set("hideAutoReverse", hideAutoReverse.toString());
+    if (!hideAutoReverse) {
+      params.set("hide_auto_reverse", "false");
+    } else {
+      params.delete("hide_auto_reverse");
+    }
     if (page > 1) params.set("page", page.toString());
 
     const newUrl = `/admin/funding${params.toString() ? `?${params.toString()}` : ""}`;
