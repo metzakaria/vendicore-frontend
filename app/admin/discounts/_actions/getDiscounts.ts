@@ -17,42 +17,14 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
-    const search = params.search || "";
-    const status = params.status || "all";
-    const discountType = params.discount_type || "all";
     const merchantId = params.merchant_id;
-    const productId = params.product_id;
 
     const where: any = {};
 
-    if (search) {
-      where.OR = [
-        { vas_merchants: { business_name: { contains: search, mode: "insensitive" } } },
-        { vas_merchants: { merchant_code: { contains: search, mode: "insensitive" } } },
-        { vas_products: { product_name: { contains: search, mode: "insensitive" } } },
-        { vas_products: { product_code: { contains: search, mode: "insensitive" } } },
-      ];
-    }
-
-    // Filter by status (is_active)
-    if (status === "active") {
-      where.is_active = true;
-    } else if (status === "inactive") {
-      where.is_active = false;
-    }
-
-    // Always filter by merchant_id if provided (required for merchant-specific views)
     if (merchantId && merchantId !== "all") {
       where.merchant_id = BigInt(merchantId);
     }
-
-    if (discountType !== "all") {
-      where.discount_type = discountType;
-    }
-
-    if (productId && productId !== "all") {
-      where.product_id = BigInt(productId);
-    }
+ // <-- Added log
 
     const [discounts, total] = await Promise.all([
       prisma.vas_merchant_discount.findMany({

@@ -21,11 +21,48 @@ import {
 import { MerchantInfoCards } from "./MerchantInfoCards";
 import { MerchantFunding } from "./MerchantFunding";
 import { MerchantDiscounts } from "./MerchantDiscounts";
-import { MerchantLoginRecords } from "./MerchantLoginRecords";
 import { resetApiKeys } from "../_actions/resetApiKeys";
 
+interface Merchant {
+  id: string;
+  merchant_code: string;
+  business_name: string;
+  business_description?: string | null;
+  account_type: string;
+  website?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  daily_tranx_limit?: string | null;
+  is_active: boolean;
+  user_id?: string | null;
+  api_key?: string | null;
+  api_secret?: string | null;
+  api_access_ips?: string | null;
+  api_key_updated_at?: Date | string | null;
+  api_secret_updated_at?: Date | string | null;
+  current_balance: string;
+  balance_before: string;
+  recentTransactionsCount: number;
+  totalVolume: string;
+  vas_users?: {
+    id: bigint | number;
+    email: string;
+    username: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone_number?: string | null;
+    is_active: boolean;
+    date_joined: Date | string;
+  } | null;
+  _count?: {
+    vas_transactions: number;
+  };
+}
+
 interface MerchantDetailsProps {
-  merchant: any;
+  merchant: Merchant;
 }
 
 export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
@@ -136,12 +173,6 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
             className="data-[state=active]:bg-transparent  border-0  data-[state=active]:shadow-none data-[state=active]:border-b-[4px] data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none border-b-[3px] border-transparent px-6 py-3 text-muted-foreground font-medium transition-all"
           >
             Discounts
-          </TabsTrigger>
-          <TabsTrigger 
-            value="user_activities"
-            className="data-[state=active]:bg-transparent  border-0  data-[state=active]:shadow-none data-[state=active]:border-b-[4px] data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none border-b-[3px] border-transparent px-6 py-3 text-muted-foreground font-medium transition-all"
-          >
-            User Activities
           </TabsTrigger>
         </TabsList>
 
@@ -393,10 +424,6 @@ export const MerchantDetails = ({ merchant }: MerchantDetailsProps) => {
 
         <TabsContent value="discounts" className="space-y-4 mt-6">
           <MerchantDiscounts merchantId={merchant.id} />
-        </TabsContent>
-
-        <TabsContent value="user_activities" className="space-y-4 mt-6">
-          <MerchantLoginRecords merchantId={merchant.id} />
         </TabsContent>
       </Tabs>
 

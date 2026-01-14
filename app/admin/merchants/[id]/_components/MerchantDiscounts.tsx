@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { getDiscounts } from "@/app/admin/discounts/_actions/getDiscounts";
 import { getProductsForMerchant } from "@/app/admin/discounts/_actions/getProductsForMerchant";
 import { getDiscountsByMerchant } from "@/app/admin/discounts/_actions/getDiscountsByMerchant";
@@ -314,10 +314,20 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Discounts</CardTitle>
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Manage Discounts
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["merchant-discounts"] })}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Manage Discounts
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

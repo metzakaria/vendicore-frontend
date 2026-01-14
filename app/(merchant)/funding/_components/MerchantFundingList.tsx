@@ -6,6 +6,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -34,7 +36,8 @@ const fetchFundingRequests = async (
   status: string,
   amount: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  hideAutoReversal: boolean
 ) => {
   const result = await getMerchantFundingRequests({
     page,
@@ -43,6 +46,7 @@ const fetchFundingRequests = async (
     amount: amount || undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+    hideAutoReversal: hideAutoReversal || undefined,
   });
 
   return {
@@ -66,6 +70,7 @@ export const MerchantFundingList = () => {
   
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState("all");
+  const [hideAutoReversal, setHideAutoReversal] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(today);
   const [endDate, setEndDate] = useState<Date | undefined>(todayEnd);
   const [page, setPage] = useState(1);
@@ -73,6 +78,7 @@ export const MerchantFundingList = () => {
   // Active filter values (applied when button is clicked)
   const [activeAmount, setActiveAmount] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
+  const [activeHideAutoReversal, setActiveHideAutoReversal] = useState(false);
   const [activeStartDate, setActiveStartDate] = useState<Date | undefined>(today);
   const [activeEndDate, setActiveEndDate] = useState<Date | undefined>(todayEnd);
 
@@ -91,6 +97,10 @@ export const MerchantFundingList = () => {
     const initialStatus = params.get("status") || "all";
     setStatus(initialStatus);
     setActiveStatus(initialStatus);
+
+    const initialHideAutoReversal = params.get("hideAutoReversal") === "true";
+    setHideAutoReversal(initialHideAutoReversal);
+    setActiveHideAutoReversal(initialHideAutoReversal);
     
     // Initialize dates from URL or use today as default
     const urlStartDate = params.get("startDate");
@@ -124,6 +134,7 @@ export const MerchantFundingList = () => {
       activeAmount,
       activeStartDate?.toISOString() || null,
       activeEndDate?.toISOString() || null,
+      activeHideAutoReversal,
     ],
     queryFn: () =>
       fetchFundingRequests(
@@ -131,7 +142,8 @@ export const MerchantFundingList = () => {
         activeStatus,
         activeAmount,
         activeStartDate ? activeStartDate.toISOString() : "",
-        activeEndDate ? activeEndDate.toISOString() : ""
+        activeEndDate ? activeEndDate.toISOString() : "",
+        activeHideAutoReversal
       ),
     retry: 1,
     staleTime: 30000,
@@ -273,6 +285,14 @@ export const MerchantFundingList = () => {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hideAutoReversal"
+                checked={hideAutoReversal}
+                onCheckedChange={(checked) => setHideAutoReversal(checked as boolean)}
+              />
+              <Label htmlFor="hideAutoReversal">Hide auto reversal</Label>
+            </div>
             <Input
               type="number"
               placeholder="Amount"
@@ -287,6 +307,7 @@ export const MerchantFundingList = () => {
               setActiveStatus(status);
               setActiveStartDate(startDate);
               setActiveEndDate(endDate);
+              setActiveHideAutoReReversal(hideAutoReversal);
               setPage(1);
               
               // Update URL
@@ -295,6 +316,7 @@ export const MerchantFundingList = () => {
               if (status !== "all") params.set("status", status);
               if (startDate) params.set("startDate", startDate.toISOString());
               if (endDate) params.set("endDate", endDate.toISOString());
+              if (hideAutoReversal) params.set("hideAutoReversal", "true");
 
               const newUrl = `/funding${params.toString() ? `?${params.toString()}` : ""}`;
               window.history.replaceState({}, "", newUrl);

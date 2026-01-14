@@ -11,6 +11,7 @@ interface GetMerchantFundingRequestsParams {
   amount?: string;
   startDate?: string;
   endDate?: string;
+  hideAutoReversal?: boolean;
 }
 
 export const getMerchantFundingRequests = async (params: GetMerchantFundingRequestsParams = {}) => {
@@ -69,6 +70,11 @@ export const getMerchantFundingRequests = async (params: GetMerchantFundingReque
         endDate.setHours(23, 59, 59, 999);
         where.created_at.lte = endDate;
       }
+    }
+
+    // Hide auto reversal filter
+    if (params.hideAutoReversal) {
+      where.is_auto_reversed = false;
     }
 
     const [fundings, total] = await Promise.all([

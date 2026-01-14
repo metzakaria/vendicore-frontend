@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,8 @@ const fetchFundingRequests = async (
   merchantId: string,
   page: number,
   status: string,
-  search: string
+  search: string,
+  hideAutoReversal: boolean
 ) => {
   const result = await getFundingRequests({
     page,
@@ -32,6 +35,7 @@ const fetchFundingRequests = async (
     merchant_id: merchantId,
     status: status as "all" | "pending" | "approved" | "rejected",
     search: search.trim() || undefined,
+    hideAutoReversal: hideAutoReversal || undefined,
   });
 
   return {
@@ -47,7 +51,9 @@ export const MerchantFunding = ({ merchantId }: MerchantFundingProps) => {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [hideAutoReversal, setHideAutoReversal] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [activeHideAutoReversal, setActiveHideAutoReversal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -55,6 +61,8 @@ export const MerchantFunding = ({ merchantId }: MerchantFundingProps) => {
     setStatus(params.get("fundingStatus") || "all");
     setSearch(params.get("fundingSearch") || "");
     setDebouncedSearch(params.get("fundingSearch") || "");
+    setActiveHideAutoReversal(params.get("fundingHideAutoReversal") === "true");
+    setHideAutoReversal(params.get("fundingHideAutoReversal") === "true");
   }, []);
 
   // Debounce search input
@@ -76,17 +84,19 @@ export const MerchantFunding = ({ merchantId }: MerchantFundingProps) => {
     else params.delete("fundingStatus");
     if (page > 1) params.set("fundingPage", page.toString());
     else params.delete("fundingPage");
+    if (activeHideAutoReversal) params.set("fundingHideAutoReversal", "true");
+    else params.delete("fundingHideAutoReversal");
 
     window.history.replaceState(
       {},
       "",
       `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`
     );
-  }, [debouncedSearch, status, page]);
+  }, [debouncedSearch, status, page, activeHideAutoReversal]);
 
   const { data, isLoading, error: queryError } = useQuery({
-    queryKey: ["merchant-funding", merchantId, page, status, debouncedSearch],
-    queryFn: () => fetchFundingRequests(merchantId, page, status, debouncedSearch),
+    queryKey: ["merchant-funding", merchantId, page, status, debouncedSearch, activeHideAutoReversal],
+    queryFn: () => fetchFundingRequests(merchantId, page, status, debouncedSearch, activeHideAutoReversal),
     retry: 1,
     staleTime: 30000,
   });
@@ -141,6 +151,18 @@ export const MerchantFunding = ({ merchantId }: MerchantFundingProps) => {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hideAutoReversal"
+                checked={hideAutoReversal}
+                onCheckedChange={(checked) => {
+                  setHideAutoReversal(checked as boolean);
+                  setActiveHideAutoReversal(checked as boolean);
+                  setPage(1);
+                }}
+              />
+              <Label htmlFor="hideAutoReversal">Hide auto reversal</Label>
+            </div>
           </div>
 
           {/* Funding Table */}
