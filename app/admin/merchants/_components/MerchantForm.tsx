@@ -98,7 +98,7 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
       if (isEditMode && merchantId) {
         const result = await updateMerchant(merchantId, data as UpdateMerchantFormData);
         if (result.success && result.merchant) {
-          router.push(`/admin/merchants/${merchantId}`);
+          router.push("/admin/merchants");
           router.refresh();
         } else {
           setError(result.error || "Failed to update merchant");

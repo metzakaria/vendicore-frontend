@@ -35,6 +35,7 @@ import { getProductsForDropdown } from "../_actions/getProductsForDropdown";
 import { getProductsForMerchant } from "../_actions/getProductsForMerchant";
 import { getDiscountsByMerchant } from "../_actions/getDiscountsByMerchant";
 import { bulkUpdateDiscounts } from "../_actions/bulkUpdateDiscounts";
+import { TableOverlayLoader } from "@/components/ui/table-overlay-loader";
 
 interface Discount {
   id: string;
@@ -420,7 +421,8 @@ export const DiscountList = () => {
       )}
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border relative">
+        <TableOverlayLoader isVisible={isFetching} />
         <Table>
           <TableHeader>
             <TableRow>
@@ -433,30 +435,7 @@ export const DiscountList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[150px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[150px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[100px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[100px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[80px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-[100px]" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : error ? (
+            {error ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-destructive">
                   Error loading discounts. Please try again.
