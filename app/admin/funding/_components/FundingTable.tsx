@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Pencil, Eye, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Pencil, Eye, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/tooltip";
 import { createFunding } from "../_actions/createFunding";
 import { approveFunding } from "../_actions/approveFunding";
-import { updateFundingAmount } from "../_actions/updateFundingAmount";
+import { updateFunding } from "../_actions/updateFunding";
 import { getFundingRequestById } from "../_actions/getFundingRequestById";
 
 interface FundingRequest {
@@ -114,7 +114,7 @@ export const FundingTable = ({
     description: "",
     autoApprove: false,
   });
-  
+
   // Edit modal state - Enhanced to include all fields
   const [editingFunding, setEditingFunding] = useState<FundingRequest | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -123,7 +123,7 @@ export const FundingTable = ({
     source: "",
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // View modal state
   const [viewingFunding, setViewingFunding] = useState<any | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -240,9 +240,12 @@ export const FundingTable = ({
     setModalError(null);
 
     try {
-      // You'll need to create this action to update all fields
-      const result = await updateFundingAmount(editingFunding.funding_ref, amount);
-      
+      const result = await updateFunding(editingFunding.funding_ref, {
+        amount: editFormData.amount,
+        description: editFormData.description,
+        source: editFormData.source,
+      });
+
       if (result.success) {
         setIsEditModalOpen(false);
         setEditingFunding(null);
@@ -358,7 +361,7 @@ export const FundingTable = ({
                     </TableCell>
                   )}
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1">
                       {/* View Button - Always available */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -375,94 +378,80 @@ export const FundingTable = ({
                         <TooltipContent>View Details</TooltipContent>
                       </Tooltip>
 
-                      {/* Edit and Approve - Only for pending requests */}
-                      {!funding.is_approved && funding.is_active && (
-                        <>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditFunding(funding)}
-                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Edit funding details</TooltipContent>
-                          </Tooltip>
-
-                          <AlertDialog>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
-                                  >
-                                    <CheckCircle2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>Approve funding request</TooltipContent>
-                            </Tooltip>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Approve Funding Request</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to approve this funding request for{" "}
-                                  <strong>{formatCurrency(funding.amount)}</strong>?
-                                  <br />
-                                  <br />
-                                  This action will credit the merchant's account and cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleApproveFunding(funding.funding_ref)}
-                                  disabled={isSubmitting}
-                                  className="bg-green-600 text-white hover:bg-green-700"
-                                >
-                                  {isSubmitting ? "Approving..." : "Approve"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
+                      {/* Edit Button - Always available if active */}
+                      {funding.is_active && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditFunding(funding)}
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit funding details</TooltipContent>
+                        </Tooltip>
                       )}
 
-                      {/* Disabled buttons for approved requests */}
+                      {/* Approve Button - Only for pending requests */}
+                      {!funding.is_approved && funding.is_active && (
+                        <AlertDialog>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Approve funding request</TooltipContent>
+                          </Tooltip>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Approve Funding Request</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to approve this funding request for{" "}
+                                <strong>{formatCurrency(funding.amount)}</strong>?
+                                <br />
+                                <br />
+                                This action will credit the merchant's account and cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleApproveFunding(funding.funding_ref)}
+                                disabled={isSubmitting}
+                                className="bg-green-600 text-white hover:bg-green-700"
+                              >
+                                {isSubmitting ? "Approving..." : "Approve"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+
+                      {/* Already approved indicator */}
                       {funding.is_approved && (
-                        <div className="flex items-center gap-1 opacity-50">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 cursor-not-allowed"
-                                disabled
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Cannot edit approved funding</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 cursor-not-allowed text-green-600"
-                                disabled
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Already approved</TooltipContent>
-                          </Tooltip>
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 cursor-not-allowed text-green-600"
+                              disabled
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Already approved</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </TableCell>
@@ -627,12 +616,6 @@ export const FundingTable = ({
                 {modalError}
               </div>
             )}
-
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 p-3 rounded-md">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                <strong>Note:</strong> You can only edit funding requests that haven't been approved yet.
-              </p>
-            </div>
 
             <div className="flex justify-end gap-2 pt-4">
               <Button

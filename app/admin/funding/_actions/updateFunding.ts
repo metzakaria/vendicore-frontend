@@ -4,7 +4,10 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export const updateFundingAmount = async (fundingRef: string, newAmount: string) => {
+export const updateFunding = async (
+  fundingRef: string,
+  data: { amount: string; description: string; source: string }
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -14,13 +17,17 @@ export const updateFundingAmount = async (fundingRef: string, newAmount: string)
       };
     }
 
-    // Get the funding request
+    const amount = parseFloat(data.amount);
+    if (isNaN(amount) || amount <= 0) {
+      return {
+        success: false,
+        error: "Invalid amount. Amount must be a positive number",
+      };
+    }
+
     const funding = await prisma.vas_merchant_funding.findUnique({
       where: {
         funding_ref: fundingRef,
-      },
-      include: {
-        vas_merchants: true,
       },
     });
 
@@ -28,28 +35,6 @@ export const updateFundingAmount = async (fundingRef: string, newAmount: string)
       return {
         success: false,
         error: "Funding request not found",
-      };
-    }
-
-    if (funding.is_approved) {
-      return {
-        success: false,
-        error: "Cannot update amount for approved funding requests",
-      };
-    }
-
-    if (funding.is_credited) {
-      return {
-        success: false,
-        error: "Cannot update amount for credited funding requests",
-      };
-    }
-
-    const amount = parseFloat(newAmount);
-    if (isNaN(amount) || amount <= 0) {
-      return {
-        success: false,
-        error: "Invalid amount. Amount must be a positive number",
       };
     }
 
@@ -63,6 +48,8 @@ export const updateFundingAmount = async (fundingRef: string, newAmount: string)
       },
       data: {
         amount: amount,
+        description: data.description,
+        source: data.source,
         balance_after: newBalanceAfter,
       },
     });
@@ -77,11 +64,10 @@ export const updateFundingAmount = async (fundingRef: string, newAmount: string)
       },
     };
   } catch (error) {
-    console.error("Error updating funding amount:", error);
+    console.error("Error updating funding:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "An unknown error occurred",
     };
   }
 };
-

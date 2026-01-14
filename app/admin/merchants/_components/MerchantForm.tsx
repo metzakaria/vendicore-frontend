@@ -158,15 +158,15 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   {isEditMode ? "Update the merchant's business details" : "Enter the merchant's business details"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 overflow-hidden">
                 <FormField
                   control={form.control}
                   name="business_name"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Business Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Acme Corporation" {...field} />
+                        <Input placeholder="Acme Corporation" {...field} className="break-words" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -177,7 +177,7 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="account_type"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Account Type *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
@@ -199,12 +199,12 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="business_description"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Business Description</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Brief description of the business"
-                          className="resize-none"
+                          className="resize-none break-words"
                           rows={3}
                           {...field}
                         />
@@ -218,13 +218,14 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="website"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Website</FormLabel>
                       <FormControl>
                         <Input
                           type="url"
                           placeholder="https://example.com"
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormMessage />
@@ -242,15 +243,15 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   Merchant's business location
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 overflow-hidden">
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Main Street" {...field} />
+                        <Input placeholder="123 Main Street" {...field} className="break-words" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,10 +263,10 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                     control={form.control}
                     name="city"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="Lagos" {...field} />
+                          <Input placeholder="Lagos" {...field} className="break-words" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -276,10 +277,10 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                     control={form.control}
                     name="state"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input placeholder="Lagos State" {...field} />
+                          <Input placeholder="Lagos State" {...field} className="break-words" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -291,10 +292,10 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="country"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Country</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nigeria" {...field} />
+                        <Input placeholder="Nigeria" {...field} className="break-words" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -311,18 +312,19 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   {isEditMode ? "Update login credentials for the merchant" : "Create login credentials for the merchant"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 overflow-hidden">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Email *</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
                           placeholder="merchant@example.com"
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormMessage />
@@ -334,13 +336,14 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Password {isEditMode ? "" : "*"}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
                           placeholder={isEditMode ? "Leave blank to keep current password" : "••••••••"}
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormDescription>
@@ -359,10 +362,10 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                     control={form.control}
                     name="first_name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John" {...field} />
+                          <Input placeholder="John" {...field} className="break-words" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -373,10 +376,10 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                     control={form.control}
                     name="last_name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Doe" {...field} />
+                          <Input placeholder="Doe" {...field} className="break-words" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -388,13 +391,14 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="phone_number"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
                         <Input
                           type="tel"
                           placeholder="+234 800 000 0000"
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormMessage />
@@ -412,13 +416,13 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   Configure merchant settings and limits
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 overflow-hidden">
                 {!isEditMode && (
                   <FormField
                     control={form.control}
                     name="initial_balance"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Initial Balance</FormLabel>
                         <FormControl>
                           <Input
@@ -426,6 +430,7 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                             step="0.01"
                             placeholder="0.00"
                             {...field}
+                            className="break-words"
                           />
                         </FormControl>
                         <FormDescription>
@@ -441,12 +446,13 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="daily_tranx_limit"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>Daily Transaction Limit</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="1000000"
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormDescription>
@@ -461,12 +467,13 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="api_access_ip"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="min-w-0">
                       <FormLabel>API Access IP</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="192.168.1.1"
                           {...field}
+                          className="break-words"
                         />
                       </FormControl>
                       <FormDescription>
@@ -483,7 +490,7 @@ export const MerchantForm = ({ mode, merchantId, initialData }: MerchantFormProp
                   control={form.control}
                   name="is_active"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 min-w-0">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">Active Status</FormLabel>
                         <FormDescription>
