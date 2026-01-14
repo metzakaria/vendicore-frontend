@@ -38,13 +38,18 @@ export const LoginForm = () => {
     setError(null);
 
     try {
+      console.log("Attempting login for:", data.email);
+      
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
+      console.log("SignIn result:", result);
+
       if (result?.error) {
+        console.error("Login error:", result.error);
         setError(result.error === "CredentialsSignin" 
           ? "Invalid email or password" 
           : result.error);
@@ -56,16 +61,25 @@ export const LoginForm = () => {
         const sessionResponse = await fetch("/api/auth/session");
         const session = await sessionResponse.json();
         
+        console.log("Session after login:", session);
+        console.log("User role:", session?.user?.role);
+        console.log("User data:", session?.user);
+        
         const role = session?.user?.role?.toLowerCase() || "";
         
+        console.log("Normalized role:", role);
+        
         if (role === "superadmin" || role === "admin") {
+          console.log("Redirecting to admin dashboard");
           router.push("/admin/dashboard");
         } else {
+          console.log("Redirecting to merchant dashboard");
           router.push("/dashboard");
         }
         router.refresh();
       }
     } catch (err) {
+      console.error("Login exception:", err);
       setError(err instanceof Error ? err.message : "An error occurred during login");
     } finally {
       setIsLoading(false);
@@ -154,4 +168,3 @@ export const LoginForm = () => {
     </Form>
   );
 };
-
