@@ -3,7 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SummaryReport } from "./_components/SummaryReport";
 
-export default async function SummaryReportPage() {
+export default async function SummaryReportPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -17,7 +21,7 @@ export default async function SummaryReportPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <SummaryReport />
+      <SummaryReport searchParams={searchParams} />
     </div>
   );
 }

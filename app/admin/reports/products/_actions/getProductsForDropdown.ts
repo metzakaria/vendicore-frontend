@@ -10,11 +10,11 @@ export const getProductsForDropdown = async () => {
       },
       select: {
         id: true,
-        name: true,
+        product_name: true,
         product_code: true,
       },
       orderBy: {
-        name: "asc",
+        product_name: "asc",
       },
     });
 

@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,15 +15,37 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CalendarIcon, Download, TrendingUp } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Download, TrendingUp, Filter, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { getRevenueReport } from "../../_actions/getRevenueReport";
+import { exportToCsv } from "@/lib/utils/exportToCsv";
 
-export const RevenueReport = () => {
+export const RevenueReport = ({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    if (searchParams) {
+      const params = new URLSearchParams(searchParams as Record<string, string>);
+      const start = params.get("startDate");
+      const end = params.get("endDate");
+
+      setStartDate(start ? new Date(start) : undefined);
+      setEndDate(end ? new Date(end) : undefined);
+
+      if (Object.keys(searchParams).length > 0) {
+        setHasSearched(true);
+      }
+    }
+  }, [searchParams]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["revenue-report", startDate?.toISOString(), endDate?.toISOString()],
@@ -32,6 +54,7 @@ export const RevenueReport = () => {
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
       }),
+    enabled: hasSearched,
     staleTime: 30000,
   });
 
@@ -42,6 +65,92 @@ export const RevenueReport = () => {
       minimumFractionDigits: 2,
     }).format(Number(amount));
   };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (startDate) params.set("startDate", startDate.toISOString());
+    if (endDate) params.set("endDate", endDate.toISOString());
+
+    setHasSearched(true);
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      const exportData = await getRevenueReport({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      });
+
+      if (!exportData || (!exportData.productRevenue.length && !exportData.merchantRevenue.length)) {
+        alert("No data to export");
+        return;
+      }
+
+      const csvData: any[] = [];
+
+      // Add summary data
+      csvData.push({
+        Report: "Summary",
+        "Total Revenue": exportData.summary.totalRevenue,
+        "Total Transactions": exportData.summary.totalTransactions,
+        "Average Transaction": exportData.summary.averageTransaction,
+      });
+      csvData.push({}); // Empty row for separation
+      
+      // Add product revenue data
+      if (exportData.productRevenue.length > 0) {
+        csvData.push({
+          Report: "Product Revenue",
+          Product: "",
+          "Product Code": "",
+          Transactions: "",
+          "Total Revenue": "",
+        });
+        exportData.productRevenue.forEach((product: any) => {
+          csvData.push({
+            Report: "",
+            Product: product.product_name,
+            "Product Code": product.product_code,
+            Transactions: product.transaction_count,
+            "Total Revenue": product.total_amount,
+          });
+        });
+        csvData.push({}); // Empty row for separation
+      }
+
+      // Add merchant revenue data
+      if (exportData.merchantRevenue.length > 0) {
+        csvData.push({
+          Report: "Merchant Revenue",
+          "Merchant Code": "",
+          "Business Name": "",
+          Transactions: "",
+          "Total Revenue": "",
+        });
+        exportData.merchantRevenue.forEach((merchant: any) => {
+          csvData.push({
+            Report: "",
+            "Merchant Code": merchant.merchant_code,
+            "Business Name": merchant.business_name,
+            Transactions: merchant.transaction_count,
+            "Total Revenue": merchant.total_amount,
+          });
+        });
+      }
+
+      exportToCsv(csvData, "revenue_report");
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -58,19 +167,31 @@ export const RevenueReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => alert("Export coming soon!")}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
+        <Button onClick={handleExport} disabled={isExporting || !hasSearched}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
         </Button>
       </div>
 
       {/* Date Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Date Range</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Date Range
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Date</label>
               <Popover>
@@ -110,168 +231,184 @@ export const RevenueReport = () => {
               </Popover>
             </div>
           </div>
+          <Button onClick={handleSearch}>
+            <Filter className="mr-2 h-4 w-4" />
+            Search
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div className="text-2xl font-bold">
-                {formatCurrency(data?.summary.totalRevenue || "0")}
-              </div>
-            )}
+      {/* Conditional rendering for report data or "no search" message */}
+      {!hasSearched ? (
+        <Card className="flex items-center justify-center py-16">
+          <CardContent className="text-center text-muted-foreground text-lg">
+            Please select a date range and click &quot;Search&quot; to view the revenue report.
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div className="text-2xl font-bold">{data?.summary.totalTransactions || 0}</div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Transaction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div className="text-2xl font-bold">
-                {formatCurrency(data?.summary.averageTransaction || "0")}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Product Revenue */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue by Product</CardTitle>
-          <CardDescription>Top products by revenue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Product Code</TableHead>
-                  <TableHead>Transactions</TableHead>
-                  <TableHead>Total Revenue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-destructive py-8">
-                      Error loading product revenue
-                    </TableCell>
-                  </TableRow>
-                ) : data?.productRevenue.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No product revenue data found
-                    </TableCell>
-                  </TableRow>
+                  <Skeleton className="h-8 w-32" />
                 ) : (
-                  data?.productRevenue.map((product: any) => (
-                    <TableRow key={product.product_id}>
-                      <TableCell className="font-medium">{product.product_name}</TableCell>
-                      <TableCell className="font-mono text-sm">{product.product_code}</TableCell>
-                      <TableCell>{product.transaction_count}</TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(product.total_amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(data?.summary.totalRevenue || "0")}
+                  </div>
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Merchant Revenue */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue by Merchant</CardTitle>
-          <CardDescription>Top merchants by revenue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Merchant Code</TableHead>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead>Transactions</TableHead>
-                  <TableHead>Total Revenue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-destructive py-8">
-                      Error loading merchant revenue
-                    </TableCell>
-                  </TableRow>
-                ) : data?.merchantRevenue.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No merchant revenue data found
-                    </TableCell>
-                  </TableRow>
+                  <Skeleton className="h-8 w-24" />
                 ) : (
-                  data?.merchantRevenue.map((merchant: any) => (
-                    <TableRow key={merchant.merchant_id}>
-                      <TableCell className="font-mono text-sm">{merchant.merchant_code}</TableCell>
-                      <TableCell className="font-medium">{merchant.business_name}</TableCell>
-                      <TableCell>{merchant.transaction_count}</TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(merchant.total_amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  <div className="text-2xl font-bold">{data?.summary.totalTransactions || 0}</div>
                 )}
-              </TableBody>
-            </Table>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Average Transaction</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-32" />
+                ) : (
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(data?.summary.averageTransaction || "0")}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Product Revenue */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue by Product</CardTitle>
+              <CardDescription>Top products by revenue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Product Code</TableHead>
+                      <TableHead>Transactions</TableHead>
+                      <TableHead>Total Revenue</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-destructive py-8">
+                          Error loading product revenue
+                        </TableCell>
+                      </TableRow>
+                    ) : data?.productRevenue.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          No product revenue data found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data?.productRevenue.map((product: any) => (
+                        <TableRow key={product.product_id}>
+                          <TableCell className="font-medium">{product.product_name}</TableCell>
+                          <TableCell className="font-mono text-sm">{product.product_code}</TableCell>
+                          <TableCell>{product.transaction_count}</TableCell>
+                          <TableCell className="font-medium">
+                            {formatCurrency(product.total_amount)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Merchant Revenue */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue by Merchant</CardTitle>
+              <CardDescription>Top merchants by revenue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Merchant Code</TableHead>
+                      <TableHead>Business Name</TableHead>
+                      <TableHead>Transactions</TableHead>
+                      <TableHead>Total Revenue</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-destructive py-8">
+                          Error loading merchant revenue
+                        </TableCell>
+                      </TableRow>
+                    ) : data?.merchantRevenue.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          No merchant revenue data found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data?.merchantRevenue.map((merchant: any) => (
+                        <TableRow key={merchant.merchant_id}>
+                          <TableCell className="font-mono text-sm">{merchant.merchant_code}</TableCell>
+                          <TableCell className="font-medium">{merchant.business_name}</TableCell>
+                          <TableCell>{merchant.transaction_count}</TableCell>
+                          <TableCell className="font-medium">
+                            {formatCurrency(merchant.total_amount)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
+
 

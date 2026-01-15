@@ -3,7 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { TransactionReport } from "./_components/TransactionReport";
 
-export default async function TransactionReportPage() {
+export default async function TransactionReportPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -17,7 +21,7 @@ export default async function TransactionReportPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <TransactionReport />
+      <TransactionReport searchParams={searchParams} />
     </div>
   );
 }

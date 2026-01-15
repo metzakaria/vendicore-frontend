@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,6 +37,7 @@ export const FundingReport = () => {
   const [merchantId, setMerchantId] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false); // Only one declaration
 
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
@@ -59,8 +60,21 @@ export const FundingReport = () => {
         merchantId: merchantId !== "all" ? merchantId : undefined,
         status: status as "all" | "approved" | "pending" | "rejected",
       }),
+    enabled: hasSearched, // Only enable if filters have been applied
     staleTime: 30000,
   });
+
+  // Effect to set hasSearched to true when any filter changes
+  // This will trigger the data fetch
+  // Effect to set hasSearched to false when any filter changes
+  // This will prevent automatic refetching until "Apply Filters" is clicked.
+  useEffect(() => {
+    setHasSearched(false);
+  }, [startDate, endDate, merchantId, status]);
+
+  const handleApplyFilters = () => {
+    setHasSearched(true);
+  };
 
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-NG", {
@@ -151,7 +165,7 @@ export const FundingReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={handleExport} disabled={isExporting}>
+        <Button onClick={handleExport} disabled={isExporting || !hasSearched}>
           {isExporting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -242,106 +256,120 @@ export const FundingReport = () => {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary */}
-      {data && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Funding Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data.summary.totalCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Funding Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.summary.totalAmount)}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Funding Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created By</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-destructive py-8">
-                      Error loading funding report
-                    </TableCell>
-                  </TableRow>
-                ) : data?.fundings.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      No funding requests found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data?.fundings.map((funding: any) => (
-                    <TableRow key={funding.id}>
-                      <TableCell className="text-sm">
-                        {formatDateTime(funding.created_at)}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{funding.funding_ref}</TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">
-                          {funding.vas_merchants?.business_name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {funding.vas_merchants?.merchant_code}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">
-                        {formatCurrency(funding.amount)}
-                      </TableCell>
-                      <TableCell className="text-sm capitalize">{funding.source}</TableCell>
-                      <TableCell>{getStatusBadge(funding)}</TableCell>
-                      <TableCell className="text-sm">
-                        {funding.vas_users_vas_merchant_funding_created_byTovas_users?.username || "N/A"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleApplyFilters} disabled={isLoading && hasSearched}>
+              {isLoading && hasSearched && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Apply Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {!hasSearched ? (
+        <Card className="flex items-center justify-center py-16">
+          <p className="text-muted-foreground text-center">Apply filters to view report data.</p>
+        </Card>
+      ) : (
+        <>
+          {/* Summary */}
+          {data && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Funding Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{data.summary.totalCount}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Funding Amount</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(data.summary.totalAmount)}</div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Funding Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Reference</TableHead>
+                      <TableHead>Merchant</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading && hasSearched ? ( // Only show skeleton if loading after search
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-destructive py-8">
+                          Error loading funding report
+                        </TableCell>
+                      </TableRow>
+                    ) : data?.fundings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No funding requests found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data?.fundings.map((funding: any) => (
+                        <TableRow key={funding.id}>
+                          <TableCell className="text-sm">
+                            {formatDateTime(funding.created_at)}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{funding.funding_ref}</TableCell>
+                          <TableCell>
+                            <div className="text-sm font-medium">
+                              {funding.vas_merchants?.business_name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {funding.vas_merchants?.merchant_code}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {formatCurrency(funding.amount)}
+                          </TableCell>
+                          <TableCell className="text-sm capitalize">{funding.source}</TableCell>
+                          <TableCell>{getStatusBadge(funding)}</TableCell>
+                          <TableCell className="text-sm">
+                            {funding.vas_users_vas_merchant_funding_created_byTovas_users?.username || "N/A"}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };

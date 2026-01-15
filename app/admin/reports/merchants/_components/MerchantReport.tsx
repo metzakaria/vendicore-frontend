@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,6 +36,7 @@ export const MerchantReport = () => {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [merchantId, setMerchantId] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { data: merchants } = useQuery({
     queryKey: ["merchants-dropdown"],
@@ -56,8 +57,19 @@ export const MerchantReport = () => {
         endDate: endDate?.toISOString(),
         merchantId: merchantId !== "all" ? merchantId : undefined,
       }),
+    enabled: hasSearched, // Only enable if filters have been applied
     staleTime: 30000,
   });
+
+  // Effect to set hasSearched to false when any filter changes
+  // This will prevent automatic refetching until "Apply Filters" is clicked.
+  useEffect(() => {
+    setHasSearched(false);
+  }, [startDate, endDate, merchantId]);
+
+  const handleApplyFilters = () => {
+    setHasSearched(true);
+  };
 
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-NG", {
@@ -119,7 +131,7 @@ export const MerchantReport = () => {
             </p>
           </div>
         </div>
-        <Button onClick={handleExport} disabled={isExporting}>
+        <Button onClick={handleExport} disabled={isExporting || !hasSearched}>
           {isExporting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -196,101 +208,115 @@ export const MerchantReport = () => {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary */}
-      {data && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Transactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data.totals.totalTransactions}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.totals.totalAmount)}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Merchant Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Merchant Code</TableHead>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Transactions</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Current Balance</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-destructive py-8">
-                      Error loading merchant report
-                    </TableCell>
-                  </TableRow>
-                ) : data?.merchants.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      No merchant data found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data?.merchants.map((merchant: any) => (
-                    <TableRow key={merchant.merchant_id}>
-                      <TableCell className="font-mono text-sm">{merchant.merchant_code}</TableCell>
-                      <TableCell className="font-medium">{merchant.business_name}</TableCell>
-                      <TableCell className="text-sm">{merchant.email}</TableCell>
-                      <TableCell className="text-sm">{merchant.total_transactions}</TableCell>
-                      <TableCell className="text-sm font-medium">
-                        {formatCurrency(merchant.total_amount)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatCurrency(merchant.current_balance)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={merchant.is_active ? "default" : "secondary"}>
-                          {merchant.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleApplyFilters} disabled={isLoading && hasSearched}>
+              {isLoading && hasSearched && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Apply Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {!hasSearched ? (
+        <Card className="flex items-center justify-center py-16">
+          <p className="text-muted-foreground text-center">Apply filters to view report data.</p>
+        </Card>
+      ) : (
+        <>
+          {/* Summary */}
+          {data && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Transactions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{data.totals.totalTransactions}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Amount</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(data.totals.totalAmount)}</div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Merchant Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Merchant Code</TableHead>
+                      <TableHead>Business Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Transactions</TableHead>
+                      <TableHead>Total Amount</TableHead>
+                      <TableHead>Current Balance</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading && hasSearched ? ( // Only show skeleton if loading after search
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-destructive py-8">
+                          Error loading merchant report
+                        </TableCell>
+                      </TableRow>
+                    ) : data?.merchants.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No merchant data found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data?.merchants.map((merchant: any) => (
+                        <TableRow key={merchant.merchant_id}>
+                          <TableCell className="font-mono text-sm">{merchant.merchant_code}</TableCell>
+                          <TableCell className="font-medium">{merchant.business_name}</TableCell>
+                          <TableCell className="text-sm">{merchant.email}</TableCell>
+                          <TableCell className="text-sm">{merchant.total_transactions}</TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {formatCurrency(merchant.total_amount)}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatCurrency(merchant.current_balance)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={merchant.is_active ? "default" : "secondary"}>
+                              {merchant.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
