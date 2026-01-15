@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, Download, Filter, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { CalendarIcon, Download, Filter, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
 import { format } from "date-fns";
 
 interface TransactionFiltersProps {
@@ -36,6 +36,7 @@ interface TransactionFiltersProps {
   onProductIdChange: (value: string) => void;
   onCategoryIdChange: (value: string) => void;
   onSearch: () => void;
+  onReset: () => void;
   onExport: () => void;
   isExporting?: boolean;
 }
@@ -60,6 +61,7 @@ export const TransactionFilters = ({
   onProductIdChange,
   onCategoryIdChange,
   onSearch,
+  onReset,
   onExport,
   isExporting = false,
 }: TransactionFiltersProps) => {
@@ -213,7 +215,7 @@ export const TransactionFilters = ({
             variant="secondary" 
             onClick={onExport} 
             disabled={isExporting}
-            className="w-full sm:w-auto order-2 sm:order-1"
+            className="w-full sm:w-auto order-3 sm:order-1"
           >
             {isExporting ? (
               <>
@@ -228,8 +230,16 @@ export const TransactionFilters = ({
             )}
           </Button>
           <Button 
+            variant="outline"
+            onClick={onReset}
+            className="w-full sm:w-auto order-2 sm:order-2"
+          >
+            <X className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Reset Filters</span>
+          </Button>
+          <Button 
             onClick={onSearch}
-            className="w-full sm:w-auto order-1 sm:order-2"
+            className="w-full sm:w-auto order-1 sm:order-3"
           >
             <Filter className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">Search Transactions</span>

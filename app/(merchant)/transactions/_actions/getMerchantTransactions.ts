@@ -111,7 +111,7 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
 
     console.log("getMerchantTransactions where clause:", JSON.stringify(serializeBigInt(where), null, 2));
 
-    const [transactions, total, totalValue, successValue, failValue] = await Promise.all([
+    const [transactions, total, totalValue, successValue, failValue, pendingValue] = await Promise.all([
       prisma.vas_transactions.findMany({
         where,
         skip,
@@ -161,6 +161,16 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
           amount: true,
         },
       }),
+      // Pending transaction value
+      prisma.vas_transactions.aggregate({
+        where: {
+          ...where,
+          status: "pending",
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
     ]);
 
     console.log(`getMerchantTransactions found ${transactions.length} transactions (total: ${total})`);
@@ -189,6 +199,7 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
         transactionValue: totalValue._sum?.amount?.toString() || "0",
         transactionSuccess: successValue._sum?.amount?.toString() || "0",
         transactionFail: failValue._sum?.amount?.toString() || "0",
+        transactionPending: pendingValue._sum?.amount?.toString() || "0",
       },
     };
 
@@ -213,6 +224,7 @@ export const getMerchantTransactions = async (params: GetMerchantTransactionsPar
         transactionValue: "0",
         transactionSuccess: "0",
         transactionFail: "0",
+        transactionPending: "0",
       },
       error: error instanceof Error ? error.message : "An unknown error occurred",
     };

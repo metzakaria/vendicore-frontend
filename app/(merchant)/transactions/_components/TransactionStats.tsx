@@ -9,6 +9,7 @@ interface TransactionStatsProps {
   transactionValue: string;
   transactionSuccess: string;
   transactionFail: string;
+  transactionPending: string;
 }
 
 const formatCurrency = (amount: string) => {
@@ -24,9 +25,10 @@ export const TransactionStats = ({
   transactionValue,
   transactionSuccess,
   transactionFail,
+  transactionPending,
 }: TransactionStatsProps) => {
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
       <Card>
         <CardContent className="pt-4 sm:pt-6">
           {isLoading ? (
@@ -65,6 +67,16 @@ export const TransactionStats = ({
             <div className="text-xl sm:text-3xl font-bold truncate">{formatCurrency(transactionFail)}</div>
           )}
           <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Fail Value</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-4 sm:pt-6">
+          {isLoading ? (
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-24 mb-2" />
+          ) : (
+            <div className="text-xl sm:text-3xl font-bold truncate">{formatCurrency(transactionPending)}</div>
+          )}
+          <p className="text-xs text-muted-foreground uppercase mt-1 truncate">Pending Value</p>
         </CardContent>
       </Card>
     </div>
