@@ -31,10 +31,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Plus, RefreshCw } from "lucide-react";
-import { getDiscounts } from "@/app/admin/discounts/_actions/getDiscounts";
-import { getProductsForMerchant } from "@/app/admin/discounts/_actions/getProductsForMerchant";
+
+// FIXED IMPORTS - Remove duplicates and use the correct paths
 import { getDiscountsByMerchant } from "@/app/admin/discounts/_actions/getDiscountsByMerchant";
 import { bulkUpdateDiscounts } from "@/app/admin/discounts/_actions/bulkUpdateDiscounts";
+import { getMerchantDiscounts } from "@/app/admin/merchants/_actions/getMerchantDiscounts"; // Changed to correct path
+import { getMerchantProducts } from "@/app/admin/merchants/_actions/getMerchantProducts"; // Added this import
 
 interface MerchantDiscountsProps {
   merchantId: string;
@@ -58,38 +60,45 @@ const fetchDiscounts = async (
   productId: string,
   discountType: string
 ) => {
-  const params: any = {
+  console.log("fetchDiscounts called with:", {
+    merchantId,
     page,
-    limit: 10,
-    merchant_id: merchantId,
-  };
-
-  // Only add discount_type if it's not "all"
-  if (discountType && discountType !== "all") {
-    params.discount_type = discountType as "percentage" | "flat";
-  }
-
-  // Only add product_id if it's not "all"
-  if (productId && productId !== "all") {
-    params.product_id = productId;
-  }
-
-  console.log("fetchDiscounts params:", params);
-
-  const result = await getDiscounts(params);
-
-  console.log("fetchDiscounts result:", {
-    discountsCount: result.discounts?.length || 0,
-    total: result.total,
+    productId,
+    discountType,
   });
 
-  return {
-    discounts: result.discounts || [],
-    total: result.total || 0,
-    page: result.page || page,
-    limit: result.limit || 10,
-    totalPages: result.totalPages || 0,
-  };
+  try {
+    // Call getMerchantDiscounts (not getDiscounts)
+    const result = await getMerchantDiscounts({
+      merchant_id: merchantId,
+      page,
+      limit: 10,
+      product_id: productId !== "all" ? productId : undefined,
+      discount_type: discountType !== "all" ? discountType : undefined,
+    });
+
+    console.log("fetchDiscounts result:", {
+      discountsCount: result.discounts?.length || 0,
+      total: result.total,
+    });
+
+    return {
+      discounts: result.discounts || [],
+      total: result.total || 0,
+      page: result.page || page,
+      limit: result.limit || 10,
+      totalPages: result.totalPages || 0,
+    };
+  } catch (error) {
+    console.error("Error in fetchDiscounts:", error);
+    return {
+      discounts: [],
+      total: 0,
+      page,
+      limit: 10,
+      totalPages: 0,
+    };
+  }
 };
 
 export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
@@ -113,9 +122,9 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
   // Fetch products for filter
   const { data: products } = useQuery({
     queryKey: ["products-for-merchant", merchantId],
-    queryFn: () => getProductsForMerchant(),
+    queryFn: () => getProductsForMerchant(merchantId),
     enabled: !!merchantId,
-    staleTime: 300000,
+    staleTime: 30000,
   });
 
   // Fetch existing discounts for modal
@@ -282,13 +291,13 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
 
       const result = await bulkUpdateDiscounts(merchantId, updates);
 
-              if (result.success && result.results) {
-                const message = `Successfully saved: ${result.results.created} created, ${result.results.updated} updated, ${result.results.deleted} deleted`;
-                if (result.results.errors.length > 0) {
-                  setError(`${message}. Errors: ${result.results.errors.slice(0, 3).join("; ")}`);
-                } else {
-                  setSuccess(message);
-                }
+      if (result.success && result.results) {
+        const message = `Successfully saved: ${result.results.created} created, ${result.results.updated} updated, ${result.results.deleted} deleted`;
+        if (result.results.errors.length > 0) {
+          setError(`${message}. Errors: ${result.results.errors.slice(0, 3).join("; ")}`);
+        } else {
+          setSuccess(message);
+        }
         queryClient.invalidateQueries({ queryKey: ["merchant-discounts"] });
         queryClient.invalidateQueries({ queryKey: ["discounts-by-merchant"] });
         setTimeout(() => {
@@ -374,7 +383,16 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
             </div>
           ) : discounts.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              No discounts found.
+              <p>No discounts found for this merchant.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Discounts
+              </Button>
             </div>
           ) : (
             <>
@@ -442,9 +460,9 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
         </div>
       </CardContent>
 
-        {/* Manage Discounts Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+      {/* Manage Discounts Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Manage Discounts</DialogTitle>
           </DialogHeader>
@@ -479,65 +497,65 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
                   </TableHeader>
                   <TableBody>
                     {productDiscounts.map((item) => (
-                    <TableRow key={item.product_id}>
-                      <TableCell>
-                        <div className="text-sm font-medium">{item.product_name}</div>
-                        <div className="text-xs text-muted-foreground">{item.product_code}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">{item.category}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={item.discount_type || "none"}
-                          onValueChange={(value) =>
-                            handleDiscountChange(item.product_id, "discount_type", value)
-                          }
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="percentage">Percentage</SelectItem>
-                            <SelectItem value="flat">Flat</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        {item.discount_type ? (
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max={item.discount_type === "percentage" ? "100" : undefined}
-                            placeholder={item.discount_type === "percentage" ? "0-100" : "0.00"}
-                            value={item.discount_value}
-                            onChange={(e) =>
-                              handleDiscountChange(item.product_id, "discount_value", e.target.value)
+                      <TableRow key={item.product_id}>
+                        <TableCell>
+                          <div className="text-sm font-medium">{item.product_name}</div>
+                          <div className="text-xs text-muted-foreground">{item.product_code}</div>
+                        </TableCell>
+                        <TableCell className="text-sm">{item.category}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={item.discount_type || "none"}
+                            onValueChange={(value) =>
+                              handleDiscountChange(item.product_id, "discount_type", value)
                             }
-                            className="w-[120px]"
-                          />
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {item.discount_type ? (
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={item.is_active}
-                              onCheckedChange={(checked) =>
-                                handleDiscountChange(item.product_id, "is_active", checked === true)
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="percentage">Percentage</SelectItem>
+                              <SelectItem value="flat">Flat</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          {item.discount_type ? (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={item.discount_type === "percentage" ? "100" : undefined}
+                              placeholder={item.discount_type === "percentage" ? "0-100" : "0.00"}
+                              value={item.discount_value}
+                              onChange={(e) =>
+                                handleDiscountChange(item.product_id, "discount_value", e.target.value)
                               }
+                              className="w-[120px]"
                             />
-                            <span className="text-xs text-muted-foreground">
-                              {item.is_active ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {item.discount_type ? (
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={item.is_active}
+                                onCheckedChange={(checked) =>
+                                  handleDiscountChange(item.product_id, "is_active", checked === true)
+                                }
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {item.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
                     ))}
                   </TableBody>
                 </Table>
@@ -558,4 +576,3 @@ export const MerchantDiscounts = ({ merchantId }: MerchantDiscountsProps) => {
     </Card>
   );
 };
-

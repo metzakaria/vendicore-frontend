@@ -17,14 +17,67 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
-    const merchantId = params.merchant_id;
 
     const where: any = {};
 
-    if (merchantId && merchantId !== "all") {
-      where.merchant_id = BigInt(merchantId);
+    // Handle merchant_id filtering - this is the key fix
+    if (params.merchant_id) {
+      // Convert string to BigInt for Prisma
+      where.merchant_id = BigInt(params.merchant_id);
     }
- // <-- Added log
+
+    // Handle status filtering
+    if (params.status && params.status !== "all") {
+      where.is_active = params.status === "active";
+    }
+
+    // Handle product_id filtering
+    if (params.product_id && params.product_id !== "all") {
+      where.product_id = BigInt(params.product_id);
+    }
+
+    // Handle discount_type filtering
+    if (params.discount_type && params.discount_type !== "all") {
+      where.discount_type = params.discount_type;
+    }
+
+    // Handle search
+    if (params.search) {
+      where.OR = [
+        {
+          vas_merchants: {
+            business_name: {
+              contains: params.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          vas_merchants: {
+            merchant_code: {
+              contains: params.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          vas_products: {
+            product_name: {
+              contains: params.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          vas_products: {
+            product_code: {
+              contains: params.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
+    }
 
     const [discounts, total] = await Promise.all([
       prisma.vas_merchant_discount.findMany({
@@ -100,4 +153,3 @@ export const getDiscounts = async (params: GetDiscountsParams = {}) => {
     };
   }
 };
-
